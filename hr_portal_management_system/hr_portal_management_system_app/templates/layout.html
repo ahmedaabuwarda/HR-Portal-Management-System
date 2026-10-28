@@ -27,5 +27,13 @@
     ></script>
     <title>Document</title>
   </head>
-  <body></body>
+  <body>
+    <header>
+      <!-- Your header content here -->
+    </header>
+
+    <main>{% block content %} {% endblock %}</main>
+
+    {% include 'footer.html' %}
+  </body>
 </html>
