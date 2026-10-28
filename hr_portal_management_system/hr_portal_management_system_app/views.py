@@ -18,3 +18,6 @@ def register(request):
 
 def logout(request):
     return render(request, 'registration/logout.html')
+
+def dashboard(request):
+    return render(request, 'user/dashboard.html')
