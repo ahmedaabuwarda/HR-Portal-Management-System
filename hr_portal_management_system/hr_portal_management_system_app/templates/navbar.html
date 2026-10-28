@@ -1,0 +1,31 @@
+<!-- bootstrap 6 navbar overflow -->
+<nav class="navbar position-sticky top-0 z-sticky bg-1 border-bottom">
+  <div class="container flex-nowrap">
+    <a
+      class="navbar-brand flex-shrink-0 d-inline-flex align-items-center gap-2 text-decoration-none"
+      href="{% url 'index' %}"
+    >
+      <span class="badge theme-primary rounded-2">HR</span>
+      <span class="fw-semibold d-none sm:d-inline">Portal</span>
+    </a>
+    <div
+      class="nav-overflow"
+      data-bs-toggle="nav-overflow"
+      data-bs-more-text="false"
+    >
+      <ul class="nav nav-pills flex-row gap-1">
+        <li class="nav-item nav-overflow-keep">
+          <a
+            class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+            href="{% url 'dashboard' %}"
+            aria-label="Dashboard"
+            >{% include "icons/layout-dashboard.html" with px=16 %}<span
+              class="d-none md:d-inline"
+              >Dashboard</span
+            ></a
+          >
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
