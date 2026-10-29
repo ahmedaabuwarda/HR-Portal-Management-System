@@ -30,6 +30,39 @@
         </div>
       </div>
     </div>
+    <div class="md:col-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column gap-2">
+          <span
+            class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start"
+            aria-hidden="true"
+          >
+            {% include "icons/fingerprint.html" with px=18 %}
+          </span>
+          <h2 class="h6 mb-0">Fingerprint enrollments</h2>
+          <p class="small fg-2 mb-0">
+            One scan per person — no badges to forget or PINs to leak.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="md:col-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column gap-2">
+          <span
+            class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start"
+            aria-hidden="true"
+          >
+            {% include "icons/clock.html" with px=18 %}
+          </span>
+          <h2 class="h6 mb-0">Attendance log</h2>
+          <p class="small fg-2 mb-0">
+            Automatic clock-in and clock-out entries with timestamps you can
+            audit.
+          </p>
+        </div>
+      </div>
+    </div>
   </section>
 </div>
 {% endblock %}
