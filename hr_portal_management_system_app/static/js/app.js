@@ -23,7 +23,14 @@ function currentTheme() {
 function syncThemeIcons(theme) {
   const show = theme === "dark" ? "sun" : "moon";
   document.querySelectorAll("[data-theme-icon]").forEach(function (el) {
-    el.hidden = el.getAttribute("data-theme-icon") !== show;
+    const hidden = el.getAttribute("data-theme-icon") !== show;
+    if (hidden) {
+      el.setAttribute("hidden", "");
+      el.style.setProperty("display", "none", "important");
+    } else {
+      el.removeAttribute("hidden");
+      el.style.setProperty("display", "inline-block", "important");
+    }
   });
 }
 
