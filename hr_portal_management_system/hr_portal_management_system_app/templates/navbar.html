@@ -3,19 +3,31 @@
   <div class="container flex-nowrap">
     <a
       class="navbar-brand flex-shrink-0 d-inline-flex align-items-center gap-2 text-decoration-none"
-      href="{% url 'index' %}"
+      href="{% url 'home' %}"
     >
       <span class="badge theme-primary rounded-2"
         >{% include "icons/fingerprint.html" with px=16 %}</span
       >
       <span class="fw-semibold d-none sm:d-inline">Portal</span>
     </a>
+    <!-- nav items section -->
     <div
       class="nav-overflow"
       data-bs-toggle="nav-overflow"
       data-bs-more-text="false"
     >
       <ul class="nav nav-pills flex-row gap-1">
+        <li class="nav-item nav-overflow-keep">
+          <a
+            class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
+            href="{% url 'home' %}"
+            aria-label="Home"
+            >{% include "icons/home.html" with px=16 %}<span
+              class="d-none md:d-inline"
+              >Home</span
+            ></a
+          >
+        </li>
         <li class="nav-item nav-overflow-keep">
           <a
             class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
@@ -50,6 +62,46 @@
           >
         </li>
       </ul>
+    </div>
+    <!-- nav registration section -->
+    <div class="d-flex flex-shrink-0 align-items-center gap-2 ms-auto">
+      {% if not request.session.user_id %}
+      <ul class="nav nav-pills flex-row gap-1">
+        <li class="nav-item">
+          <a
+            class="nav-link active d-inline-flex align-items-center gap-2"
+            {%
+            if
+            request.resolver_match.url_name="user.login"
+            %}aria-current="page"
+            {%
+            endif
+            %}
+            href="{% url 'login' %}"
+            >{% include "icons/log-in.html" with px=16 %}Log in</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link d-inline-flex align-items-center gap-2"
+            {%
+            if
+            request.resolver_match.url_name=""
+            ="user.register"
+            %}aria-current="page"
+            {%
+            endif
+            %}
+            href="{% url 'register' %}"
+            aria-label="Register"
+            >{% include "icons/user-plus.html" with px=16 %}<span
+              class="d-none sm:d-inline"
+              >Register</span
+            ></a
+          >
+        </li>
+      </ul>
+      {% endif %}
     </div>
   </div>
 </nav>
