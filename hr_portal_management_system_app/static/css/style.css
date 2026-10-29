@@ -1,3 +1,16 @@
+/* with help of AI, changed the primary color to yellow */
 :root {
-  /* --bs-primary-bg: #ffc107; would be the primary color for the portal yellow */
+  --bs-body-font-family: "Inter", system-ui, sans-serif;
+  --bs-primary-base: #8a6d00;
+  --bs-primary-bg: #ffd60a;
+  --bs-primary-contrast: #1a1500;
+  --bs-primary-fg: light-dark(#8a6d00, #ffd60a);
+  --bs-primary-fg-emphasis: light-dark(#5c4a00, #fff3b0);
+  --bs-primary-bg-subtle: light-dark(#fff7cc, #3d3200);
+  --bs-primary-bg-muted: light-dark(#ffe97a, #6b5900);
+  --bs-primary-border: light-dark(#e6b800, #8a6d00);
+  --bs-primary-focus-ring: light-dark(
+    color-mix(in oklch, #ffd60a 50%, var(--bs-bg-body)),
+    color-mix(in oklch, #ffd60a 75%, var(--bs-bg-body))
+  );
 }
