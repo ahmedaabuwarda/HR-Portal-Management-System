@@ -10,6 +10,32 @@
           Enroll employees, scan in each morning, and keep reliable clock-in
           records without a single paper timesheet.
         </p>
+        <div class="d-flex justify-content-center gap-2 mt-6">
+          {% if request.session.user_id %}
+          <a
+            href="{% url 'dashboard' %}"
+            class="btn btn-solid theme-primary d-inline-flex align-items-center gap-2"
+            >{% include "icons/layout-dashboard.html" with px=18 %}<span
+              >Open dashboard</span
+            ></a
+          >
+          {% else %}
+          <a
+            href="{% url 'login' %}"
+            class="btn btn-solid theme-primary d-inline-flex align-items-center gap-2"
+          >
+            {% include "icons/fingerprint.html" with px=18 %}
+            <span>Log in</span>
+          </a>
+          <a
+            href="{% url 'register' %}"
+            class="btn btn-outline d-inline-flex align-items-center gap-2"
+            >{% include "icons/user-plus.html" with px=18 %}<span
+              >Create an account</span
+            ></a
+          >
+          {% endif %}
+        </div>
       </div>
     </div>
   </section>
