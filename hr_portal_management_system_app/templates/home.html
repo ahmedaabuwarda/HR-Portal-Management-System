@@ -1,5 +1,62 @@
-{% extends 'layout.html' %} {% block content %}
+{% extends 'layout.html' %} {% block title %}Home{% endblock %}
+{% block content %}
 <div class="container">
-  <h1>Your team's attendance, powered by a fingerprint.</h1>
+  <section class="text-center py-12 position-relative overflow-hidden">
+    {% include "icons/fingerprint.html" with px=560 sw=0.4 class_name="position-absolute top-50 start-50 translate-middle d-none md:d-block fg-primary opacity-25 pe-none" %}
+    <div class="row justify-content-center position-relative mt-12 mb-12">
+      <div class="lg:col-8">
+        <h1 class="text-5xl fw-semibold text-balance">Your team's attendance, powered by a fingerprint.</h1>
+        <p class="lead fg-2 mt-6">Enroll employees, scan in each morning, and keep reliable clock-in records without a single paper timesheet.</p>
+        <div class="d-flex justify-content-center gap-2 mt-6">
+          {% if request.session.user_id %}
+          <a href="{% url 'dashboard' %}" class="btn btn-solid theme-primary d-inline-flex align-items-center gap-2"
+            >{% include "icons/layout-dashboard.html" with px=18 %}<span>Open dashboard</span></a
+          >
+          {% else %}
+          <a href="{% url 'login' %}" class="btn btn-solid theme-primary d-inline-flex align-items-center gap-2">
+            {% include "icons/fingerprint.html" with px=18 %}
+            <span>Log in</span>
+          </a>
+          <a href="{% url 'register' %}" class="btn btn-outline d-inline-flex align-items-center gap-2"> {% include "icons/user-plus.html" with px=18 %}<span>Create an account</span></a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="row gx-5 gy-5 pb-12">
+    <div class="md:col-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column gap-2">
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start" aria-hidden="true">
+            {% include "icons/users.html" with px=18 %}
+          </span>
+          <h2 class="h6 mb-0">Employee records</h2>
+          <p class="small fg-2 mb-0">Keep every employee's details organized in one secure place.</p>
+        </div>
+      </div>
+    </div>
+    <div class="md:col-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column gap-2">
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start" aria-hidden="true">
+            {% include "icons/fingerprint.html" with px=18 %}
+          </span>
+          <h2 class="h6 mb-0">Fingerprint enrollments</h2>
+          <p class="small fg-2 mb-0">One scan per person — no badges to forget or PINs to leak.</p>
+        </div>
+      </div>
+    </div>
+    <div class="md:col-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column gap-2">
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start" aria-hidden="true">
+            {% include "icons/clock.html" with px=18 %}
+          </span>
+          <h2 class="h6 mb-0">Attendance log</h2>
+          <p class="small fg-2 mb-0">Automatic clock-in and clock-out entries with timestamps you can audit.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}
