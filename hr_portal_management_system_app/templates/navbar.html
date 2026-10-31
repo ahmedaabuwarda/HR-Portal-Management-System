@@ -1,64 +1,31 @@
 <!-- bootstrap 6 navbar overflow -->
 <nav class="navbar position-sticky top-0 z-sticky bg-1 border-bottom">
   <div class="container flex-nowrap">
-    <a
-      class="navbar-brand flex-shrink-0 d-inline-flex align-items-center gap-2 text-decoration-none"
-      href="{% url 'home' %}"
-    >
-      <span class="badge theme-primary rounded-2"
-        >{% include "icons/fingerprint.html" with px=16 %}</span
-      >
+    <a class="navbar-brand flex-shrink-0 d-inline-flex align-items-center gap-2 text-decoration-none" href="{% url 'home' %}">
+      <span class="badge theme-primary rounded-2">{% include "icons/fingerprint.html" with px=16 %}</span>
       <span class="fw-semibold d-none sm:d-inline">Portal</span>
     </a>
     <!-- nav items section -->
-    <div
-      class="nav-overflow"
-      data-bs-toggle="nav-overflow"
-      data-bs-more-text="false"
-    >
+    <div class="nav-overflow" data-bs-toggle="nav-overflow" data-bs-more-text="false">
       <ul class="nav nav-pills flex-row gap-1">
         <li class="nav-item nav-overflow-keep">
-          <a
-            class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
-            href="{% url 'home' %}"
-            aria-label="Home"
-            >{% include "icons/home.html" with px=16 %}<span
-              class="d-none md:d-inline"
-              >Home</span
-            ></a
+          <a class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}" aria-label="Home"
+            >{% include "icons/home.html" with px=16 %}<span class="d-none md:d-inline">Home</span></a
           >
         </li>
         <li class="nav-item nav-overflow-keep">
-          <a
-            class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-            href="{% url 'dashboard' %}"
-            aria-label="Dashboard"
-            >{% include "icons/layout-dashboard.html" with px=16 %}<span
-              class="d-none md:d-inline"
-              >Dashboard</span
-            ></a
+          <a class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}" aria-label="Dashboard"
+            >{% include "icons/layout-dashboard.html" with px=16 %}<span class="d-none md:d-inline">Dashboard</span></a
           >
         </li>
         <li class="nav-item nav-overflow-keep">
-          <a
-            class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'about_us' %}active{% endif %}"
-            href="{% url 'about_us' %}"
-            aria-label="About Us"
-            >{% include "icons/info.html" with px=16 %}<span
-              class="d-none md:d-inline"
-              >About Us</span
-            ></a
+          <a class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'about_us' %}active{% endif %}" href="{% url 'about_us' %}" aria-label="About Us"
+            >{% include "icons/info.html" with px=16 %}<span class="d-none md:d-inline">About Us</span></a
           >
         </li>
         <li class="nav-item nav-overflow-keep">
-          <a
-            class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'contact_us' %}active{% endif %}"
-            href="{% url 'contact_us' %}"
-            aria-label="Contact Us"
-            >{% include "icons/mail.html" with px=16 %}<span
-              class="d-none md:d-inline"
-              >Contact Us</span
-            ></a
+          <a class="nav-link d-inline-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'contact_us' %}active{% endif %}" href="{% url 'contact_us' %}" aria-label="Contact Us"
+            >{% include "icons/mail.html" with px=16 %}<span class="d-none md:d-inline">Contact Us</span></a
           >
         </li>
       </ul>
@@ -67,136 +34,41 @@
     <div class="d-flex flex-shrink-0 align-items-center gap-2 ms-auto">
       {% if request.session.user_id %}
       <div class="d-inline-flex">
-        <button
-          type="button"
-          class="btn btn-text d-inline-flex align-items-center gap-2"
-          data-bs-toggle="menu"
-          data-bs-placement="bottom-end"
-          aria-expanded="false"
-        >
-          <span
-            class="avatar avatar-xs avatar-subtle theme-primary fw-semibold"
-            aria-hidden="true"
-            >{{ request.session.user_first_name|first|upper }}</span
-          >
-          <span class="small fw-medium d-none md:d-inline"
-            >{{ request.session.user_first_name }}</span
-          >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
+        <button type="button" class="btn btn-text d-inline-flex align-items-center gap-2" data-bs-toggle="menu" data-bs-placement="bottom-end" aria-expanded="false">
+          <span class="avatar avatar-xs avatar-subtle theme-primary fw-semibold" aria-hidden="true">{{ request.session.user_first_name|first|upper }}</span>
+          <span class="small fw-medium d-none md:d-inline">{{ request.session.user_first_name }}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m6 9 6 6 6-6" />
           </svg>
         </button>
         <div class="menu">
-          <h6 class="menu-header">
-            Signed in as {{ request.session.user_first_name }}
-          </h6>
-          <a
-            class="menu-item d-flex align-items-center gap-2"
-            href="{% url 'dashboard' %}"
-            >{% include "icons/layout-dashboard.html" with px=16 %}Dashboard</a
-          >
-          <a
-            class="menu-item d-flex align-items-center gap-2"
-            href="{% url 'user.settings' %}"
-            >{% include "icons/settings.html" with px=16 %}Settings</a
-          >
+          <h6 class="menu-header">Signed in as {{ request.session.user_first_name }}</h6>
+          <a class="menu-item d-flex align-items-center gap-2" href="{% url 'dashboard' %}">{% include "icons/layout-dashboard.html" with px=16 %}Dashboard</a>
+          <a class="menu-item d-flex align-items-center gap-2" href="{% url 'user.settings' %}">{% include "icons/settings.html" with px=16 %}Settings</a>
           <hr class="menu-divider" />
-          <form method="post" action="{% url 'user.logout' %}">
+          <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
-            <button
-              type="submit"
-              class="menu-item theme-danger d-flex align-items-center gap-2"
-            >
-              {% include "icons/log-out.html" with px=16 %}Log out
-            </button>
+            <button type="submit" class="menu-item theme-danger d-flex align-items-center gap-2">{% include "icons/log-out.html" with px=16 %}Log out</button>
           </form>
         </div>
       </div>
       {% else %}
       <ul class="nav nav-pills flex-row gap-1">
         <li class="nav-item">
-          <a
-            class="nav-link active d-inline-flex align-items-center gap-2"
-            {%
-            if
-            request.resolver_match.url_name="user.login"
-            %}aria-current="page"
-            {%
-            endif
-            %}
-            href="{% url 'login' %}"
+          <a class="nav-link active d-inline-flex align-items-center gap-2" {% if request.resolver_match.url_name == 'login' %}aria-current="page"{% endif %} href="{% url 'login' %}"
             >{% include "icons/log-in.html" with px=16 %}Log in</a
           >
         </li>
         <li class="nav-item">
-          <a
-            class="nav-link d-inline-flex align-items-center gap-2"
-            {%
-            if
-            request.resolver_match.url_name=""
-            ="user.register"
-            %}aria-current="page"
-            {%
-            endif
-            %}
-            href="{% url 'register' %}"
-            aria-label="Register"
-            >{% include "icons/user-plus.html" with px=16 %}<span
-              class="d-none sm:d-inline"
-              >Register</span
-            ></a
+          <a class="nav-link d-inline-flex align-items-center gap-2" {% if request.resolver_match.url_name == 'register' %}aria-current="page"{% endif %} href="{% url 'register' %}" aria-label="Register"
+            >{% include "icons/user-plus.html" with px=16 %}<span class="d-none sm:d-inline">Register</span></a
           >
         </li>
       </ul>
       {% endif %}
-      <button
-        type="button"
-        class="btn btn-icon"
-        data-theme-toggle
-        aria-label="Toggle dark mode"
-      >
-        <svg
-          data-theme-icon="moon"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-        <svg
-          data-theme-icon="sun"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          hidden
-        >
-          <circle cx="12" cy="12" r="4" />
-          <path
-            d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-          />
-        </svg>
+      <button type="button" class="btn btn-icon" data-theme-toggle aria-label="Toggle dark mode">
+        {% include "icons/moon.html" with px=18 sw=2 %}
+        {% include "icons/sun.html" with px=18 sw=2 %}
       </button>
     </div>
   </div>
