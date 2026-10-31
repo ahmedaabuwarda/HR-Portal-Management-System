@@ -6,24 +6,12 @@
     <meta name="color-scheme" content="light dark" />
     {% load static %}
     <!-- website favicon -->
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="{% static 'images/favicon.png' %}"
-    />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="{% static 'images/favicon.svg' %}"
-    />
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}" />
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}" />
     <!-- Google Fonts  -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
     <!-- Bootstrap 6 CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@6.0.0-alpha.1/dist/css/bootstrap.min.css"
@@ -39,18 +27,10 @@
       crossorigin="anonymous"
     ></script>
     <!-- app css -->
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{% static 'css/style.css' %}"
-    />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" />
     <!-- app js -->
-    <script
-      defer
-      type="text/javascript"
-      src="{% static 'js/app.js' %}"
-    ></script>
-    <title>Document</title>
+    <script defer type="text/javascript" src="{% static 'js/app.js' %}"></script>
+    <title>HR Management System | {% block title %}{% endblock %}</title>
   </head>
   <body>
     <header>

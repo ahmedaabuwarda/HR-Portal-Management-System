@@ -1,3 +1,17 @@
-{% extends 'layout.html' %} {% block content %}
-<div class="container">About us Page</div>
+{% extends 'layout.html' %} {% block title %}About Us{% endblock %}
+{% block content %}
+<div class="container">
+	<section class="text-center py-12">
+		<div class="row justify-content-center mt-12 mb-12">
+			<div class="lg:col-8">
+				<h1 class="text-5xl fw-semibold text-balance">Attendance that starts with a fingerprint.</h1>
+				<p class="lead fg-2 mt-6">
+					HR Portal replaces paper timesheets and shared PINs with one scan per person. We built it so teams
+					can trust every clock-in, and so administrators can spend their time on people instead of
+					paperwork.
+				</p>
+			</div>
+		</div>
+	</section>
+</div>
 {% endblock %}
