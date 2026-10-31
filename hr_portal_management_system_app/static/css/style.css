@@ -13,4 +13,38 @@
     color-mix(in oklch, #ffd60a 50%, var(--bs-bg-body)),
     color-mix(in oklch, #ffd60a 75%, var(--bs-bg-body))
   );
+
+  /* Keep three chromatic families: gold primary, green success, red danger. */
+  --bs-accent-base: var(--bs-primary-base);
+  --bs-accent-bg: var(--bs-primary-bg);
+  --bs-accent-contrast: var(--bs-primary-contrast);
+  --bs-accent-fg: var(--bs-primary-fg);
+  --bs-accent-fg-emphasis: var(--bs-primary-fg-emphasis);
+  --bs-accent-bg-subtle: var(--bs-primary-bg-subtle);
+  --bs-accent-bg-muted: var(--bs-primary-bg-muted);
+  --bs-accent-border: var(--bs-primary-border);
+  --bs-accent-focus-ring: var(--bs-primary-focus-ring);
+
+  --bs-warning-base: var(--bs-primary-base);
+  --bs-warning-bg: var(--bs-primary-bg);
+  --bs-warning-contrast: var(--bs-primary-contrast);
+  --bs-warning-fg: var(--bs-primary-fg);
+  --bs-warning-fg-emphasis: var(--bs-primary-fg-emphasis);
+  --bs-warning-bg-subtle: var(--bs-primary-bg-subtle);
+  --bs-warning-bg-muted: var(--bs-primary-bg-muted);
+  --bs-warning-border: var(--bs-primary-border);
+  --bs-warning-focus-ring: var(--bs-primary-focus-ring);
+
+  --bs-info-base: var(--bs-secondary-base);
+  --bs-info-bg: var(--bs-secondary-bg);
+  --bs-info-contrast: var(--bs-secondary-contrast);
+  --bs-info-fg: var(--bs-secondary-fg);
+  --bs-info-fg-emphasis: var(--bs-secondary-fg-emphasis);
+  --bs-info-bg-subtle: var(--bs-secondary-bg-subtle);
+  --bs-info-bg-muted: var(--bs-secondary-bg-muted);
+  --bs-info-border: var(--bs-secondary-border);
+  --bs-info-focus-ring: var(--bs-secondary-focus-ring);
+
+  /* Darken success text so subtle green badges meet AA in light mode. */
+  --bs-success-fg: light-dark(var(--bs-green-700), var(--bs-green-400));
 }

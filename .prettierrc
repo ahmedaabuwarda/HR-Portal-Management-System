@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": "hr_portal_management_system_app/templates/**/*.html",
+      "options": {
+        "printWidth": 200
+      }
+    }
+  ]
+}
