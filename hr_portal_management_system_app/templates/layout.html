@@ -31,11 +31,15 @@
     <!-- app js -->
     <!-- One script for the whole site: theme, toasts and fingerprints. -->
     <script defer type="text/javascript" src="{% static 'js/app.js' %}"></script>
+    <!-- Script for showing/hiding password -->
+    <script defer type="text/javascript" src="{% static 'js/show_hide_password.js' %}"></script>
+    <!-- Script for handling toasts -->
+    <script type="module" src="{% static 'js/toast.js' %}"></script>
     <title>HR Management System | {% block title %}{% endblock %}</title>
   </head>
   <body class="bg-1 d-flex flex-column min-vh-100">
     <!-- Your header content here -->
-    {% include 'partials/navbar.html' %}
+    {% include 'partials/navbar.html' %} {% if messages %} {% include "partials/toast.html" %} {% endif %}
 
     <main id="content" class="flex-grow-1 d-flex flex-column">{% block content %} {% endblock %}</main>
 
