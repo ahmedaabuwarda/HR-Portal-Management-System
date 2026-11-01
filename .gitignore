@@ -10,3 +10,20 @@ hr_portal_management_system/__pycache__/settings.cpython-314.pyc
 hr_portal_management_system/__pycache__/urls.cpython-314.pyc
 hr_portal_management_system/__pycache__/wsgi.cpython-314.pyc
 hr_portal_management_system_app/migrations/__pycache__/__init__.cpython-314.pyc
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Django
+db.sqlite3
+*.log
+staticfiles/
+media/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
