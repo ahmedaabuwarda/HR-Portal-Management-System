@@ -1,0 +1,53 @@
+{%extends "layout.html"%} {%block title%}Register{% endblock %} {%block content%}
+<div class="container py-5 my-auto">
+  <div class="row justify-content-center">
+    <div class="col-12 sm:col-8 md:col-6 lg:col-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- fingerprint logo -->
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mx-auto mb-3" aria-hidden="true">
+            {% include "icons/fingerprint.html" with px=20 %}
+          </span>
+          <h1 class="h4 text-center mb-1">Create an account</h1>
+          <p class="text-center fg-2 mb-4">Join your HR workspace</p>
+          <form method="post" action="{% url 'register' %}" novalidate>
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-6 mb-3">
+                <label for="id_first_name" class="form-label">First name</label>
+                <input type="text" class="form-control" id="id_first_name" name="first_name" autocomplete="given-name" required />
+              </div>
+              <div class="col-6 mb-3">
+                <label for="id_last_name" class="form-label">Last name</label>
+                <input type="text" class="form-control" id="id_last_name" name="last_name" autocomplete="family-name" required />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="id_email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="id_email" name="email" autocomplete="email" required />
+            </div>
+            <div class="mb-3">
+              <label for="id_password" class="form-label">Password</label>
+              <div class="position-relative">
+                <input type="password" class="form-control pe-5" id="id_password" name="password" autocomplete="new-password" minlength="8" required />
+                <button type="button" class="btn btn-sm btn-text position-absolute top-50 translate-middle-y end-0 me-1" data-pw-toggle="id_password" aria-label="Show password" aria-pressed="false">
+                  {% include "icons/eye.html" with px=18 %}
+                </button>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label for="id_confirm_password" class="form-label">Confirm password</label>
+              <input type="password" class="form-control" id="id_confirm_password" name="confirm_password" autocomplete="new-password" minlength="8" required />
+            </div>
+            <button type="submit" class="btn btn-solid theme-primary w-100 d-inline-flex align-items-center justify-content-center gap-2">{% include "icons/user-plus.html" with px=18 %} Create account</button>
+          </form>
+          <p class="mt-4 mb-0 text-center small fg-2">
+            Already have an account?
+            <a class="d-inline-flex align-items-center gap-1" href="{% url 'login' %}">{% include "icons/log-in.html" with px=14 %}Log in</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
