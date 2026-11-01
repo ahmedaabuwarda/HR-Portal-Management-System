@@ -8,6 +8,11 @@ from .models import User, normalize_email
 
 # Create your views here.
 
+# A real bcrypt hash, used to time-check an unknown email so a login attempt
+# takes about the same time whether the account exists or not.
+DUMMY_PASSWORD_HASH = '$2b$12$HZAl9cTJ9PPgPlcA/H18he6oB5WzVtIAVwXseSS7Zz3MwfTfkF6/y'
+
+
 # ---------- Helper functions ----------
 
 def begin_session(request, user):
@@ -38,7 +43,53 @@ def contact_us(request):
 # ---------- Login / Register / Logout ----------
 
 def login(request):
-    return render(request, 'auth/login.html')
+    """Render the login form or authenticate a password sign-in."""
+
+    # GET: show the form, or send an already signed-in visitor to the dashboard.
+    if request.method == 'GET':
+        if "user_id" in request.session:
+            return redirect('dashboard')
+
+        return render(request, 'auth/login.html')
+
+    # POST: validate the credentials.
+    if "user_id" in request.session:
+        messages.error(request, "You already logged in!")
+        return redirect('dashboard')
+
+    errors = User.objects.login_validator(request.POST)
+
+    if errors:
+        for key, val in errors.items():
+            messages.error(request, val)
+
+        return redirect('login')
+
+    email = normalize_email(request.POST.get('email'))
+    password = request.POST.get('password') or ''
+    user = User.objects.filter(email=email).first()
+
+    # Unknown email: run a dummy check so the timing matches a wrong password.
+    if user is None:
+        bcrypt.checkpw(password.encode(), DUMMY_PASSWORD_HASH.encode())
+        messages.error(request, "Invalid email or password")
+        return redirect('login')
+
+    # A corrupted stored hash raises ValueError; treat it as a wrong password.
+    try:
+        if not bcrypt.checkpw(password.encode(), user.password.encode()):
+            messages.error(request, "Invalid email or password")
+            return redirect('login')
+    except ValueError:
+        messages.error(request, "Invalid email or password")
+        return redirect('login')
+
+    messages.success(request, "Logged in successfully!")
+
+    # add user id to session
+    begin_session(request, user)
+
+    return redirect('dashboard')
 
 
 def register(request):
