@@ -11,13 +11,13 @@ def about_us(request):
     return render(request, 'about_us.html')
 
 def login(request):
-    return render(request, 'registration/login.html')
+    return render(request, 'auth/login.html')
 
 def register(request):
-    return render(request, 'registration/register.html')
+    return render(request, 'auth/register.html')
 
 def logout(request):
-    return render(request, 'registration/logout.html')
+    return render(request, 'auth/logout.html')
 
 def dashboard(request):
     return render(request, 'user/dashboard.html')
