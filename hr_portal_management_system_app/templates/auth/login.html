@@ -18,10 +18,24 @@
             </div>
             <div class="mb-5">
               <label for="id_password" class="form-label">Password</label>
-              <input type="password" class="form-control pe-5" id="id_password" name="password" autocomplete="current-password" required />
+              <div class="position-relative">
+                <input type="password" class="form-control pe-5" id="id_password" name="password" autocomplete="current-password" required />
+                <button type="button" class="btn btn-sm btn-text position-absolute top-50 translate-middle-y end-0 me-1" data-pw-toggle="id_password" aria-label="Show password" aria-pressed="false">
+                  {% include "icons/eye.html" with px=18 %}
+                </button>
+              </div>
             </div>
-            <button type="submit" class="btn btn-solid theme-primary flex-grow-1 d-inline-flex align-items-center justify-content-center gap-2">{% include "icons/log-in.html" with px=18 %} Log in</button>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-solid theme-primary flex-grow-1 d-inline-flex align-items-center justify-content-center gap-2">{% include "icons/log-in.html" with px=18 %} Log in</button>
+              <button type="button" class="btn btn-outline theme-primary" id="passkey_login" title="Log in/check in with fingerprint" aria-describedby="passkey_error">
+                {% include "icons/fingerprint.html" with px=18 %}
+                <span class="visually-hidden">Log in with fingerprint</span>
+              </button>
+            </div>
           </form>
+          <p class="mt-4 mb-0 text-center small fg-2">
+            New here? <a class="d-inline-flex align-items-center gap-1" href="{% url 'register' %}"> {% include 'icons/user-plus.html' with px=14 %}Create an account</a>
+          </p>
         </div>
       </div>
     </div>
