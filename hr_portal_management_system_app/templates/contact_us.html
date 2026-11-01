@@ -1,3 +1,71 @@
-{% extends 'layout.html' %} {% block title %}Contact Us{% endblock %} {% block content %}
-<div class="container">Contact Us Page</div>
+{% extends 'layout.html' %} {% block title %}Contact Us{% endblock %}
+{% block content %}
+<div class="container">
+  <section class="text-center py-12">
+    <div class="row justify-content-center mt-12 mb-12">
+      <div class="lg:col-8">
+        <h1 class="text-5xl fw-semibold text-balance">Contact us</h1>
+        <p class="lead fg-2 mt-6">Questions about the portal, a bug to report, or feedback on the fingerprint flow? We would love to hear from you.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="row gx-5 gy-5 pb-12">
+    <div class="md:col-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column gap-2">
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start" aria-hidden="true">
+            {% include "icons/mail.html" with px=18 %}
+          </span>
+          <h2 class="h6 mb-0">Email</h2>
+          <p class="small fg-2 mb-0">
+            <a href="mailto:hrportal.support@gmail.com">hrportal.support@gmail.com</a>
+          </p>
+          <p class="small fg-2 mb-0">We usually reply within one business day.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="md:col-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column gap-2">
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start" aria-hidden="true">
+            {% include "icons/map-pin.html" with px=18 %}
+          </span>
+          <h2 class="h6 mb-0">Location</h2>
+          <p class="small fg-2 mb-0">Gaza, Palestine</p>
+          <p class="small fg-2 mb-0">Remote-first team, available worldwide.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="md:col-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column gap-2">
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start" aria-hidden="true">
+            {% include "icons/clock.html" with px=18 %}
+          </span>
+          <h2 class="h6 mb-0">Hours</h2>
+          <p class="small fg-2 mb-0">Sunday - Thursday, 8:00 - 16:00</p>
+          <p class="small fg-2 mb-0">Closed Friday and Saturday.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-12">
+    <div class="text-center mb-12">
+      <h2 class="h4 fw-semibold">Via Email</h2>
+      <p class="fg-2 mb-0">Reach us via email. Anytime Anywhere!</p>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+        <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2" aria-hidden="true"> {% include "icons/users.html" with px=18 %} </span>
+        <h2 class="h6 mb-0">Prefer to reach the team directly?</h2>
+        <p class="small fg-2 mb-2">Ahmed Abuwarda (lead developer) and Duaa Abushar (co-developer) are happy to help, drop us an email and we will get back to you.</p>
+        <p><a href="mailto:hrportal.support@gmail.com" class="btn btn-solid theme-primary d-inline-flex align-items-center gap-2 mt-2">{% include "icons/mail.html" with px=18 %}<span>Email the team</span></a></p>
+      </div>
+    </div>
+  </section>
+</div>
 {% endblock %}
