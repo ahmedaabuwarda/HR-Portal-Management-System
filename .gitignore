@@ -1,1 +1,12 @@
 ./hr_portal_management_system_app/__pycache__/*
+hr_portal_management_system_app/__pycache__/__init__.cpython-314.pyc
+hr_portal_management_system_app/__pycache__/admin.cpython-314.pyc
+hr_portal_management_system_app/__pycache__/apps.cpython-314.pyc
+hr_portal_management_system_app/__pycache__/models.cpython-314.pyc
+hr_portal_management_system_app/__pycache__/urls.cpython-314.pyc
+hr_portal_management_system_app/__pycache__/views.cpython-314.pyc
+hr_portal_management_system/__pycache__/__init__.cpython-314.pyc
+hr_portal_management_system/__pycache__/settings.cpython-314.pyc
+hr_portal_management_system/__pycache__/urls.cpython-314.pyc
+hr_portal_management_system/__pycache__/wsgi.cpython-314.pyc
+hr_portal_management_system_app/migrations/__pycache__/__init__.cpython-314.pyc
