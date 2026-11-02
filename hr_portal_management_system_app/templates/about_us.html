@@ -1,91 +1,49 @@
-{% extends 'layout.html' %} {% block title %}About Us{% endblock %}
-{% block content %}
+{% extends 'layout.html' %} {% block title %}About Us{% endblock %} {% block content %}
 <div class="container">
-	<section class="text-center py-12">
-		<div class="row justify-content-center mt-12 mb-12">
-			<div class="lg:col-8">
-				<h1 class="text-5xl fw-semibold text-balance">Attendance that starts with a fingerprint.</h1>
-				<p class="lead fg-2 mt-6">
-					HR Portal replaces paper timesheets and shared PINs with one scan per person. We built it so teams
-					can trust every clock-in, and so administrators can spend their time on people instead of
-					paperwork.
-				</p>
-			</div>
-		</div>
-	</section>
+  <section class="text-center py-12">
+    <div class="row justify-content-center mt-12 mb-12">
+      <div class="lg:col-8">
+        <h1 class="text-5xl fw-semibold text-balance">Attendance that starts with a fingerprint.</h1>
+        <p class="lead fg-2 mt-6">
+          HR Portal replaces paper timesheets and shared PINs with one scan per person. We built it so teams can trust every clock-in, and so administrators can spend their time on people instead of paperwork.
+        </p>
+      </div>
+    </div>
+  </section>
 
-	<section class="row gx-5 gy-5 pb-12">
-		<div class="md:col-4">
-			<div class="card shadow-sm h-100">
-				<div class="card-body d-flex flex-column gap-2">
-					<span
-						class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start"
-						aria-hidden="true">
-						{% include "icons/fingerprint.html" with px=18 %}
-					</span>
-					<h2 class="h6 mb-0">Secure by design</h2>
-					<p class="small fg-2 mb-0">Passkeys and platform authenticators mean no passwords to leak and no biometric
-						data stored on our servers.</p>
-				</div>
-			</div>
-		</div>
+  <section class="row gx-5 gy-5 pb-12">
+    {%include "partials/card.html" with card_icon="icons/fingerprint.html" card_title="Secure by design" card_description="Passkeys and platform authenticators mean no passwords to leak and no biometric data stored on our servers."%}
+    <!--  -->
+    {%include "partials/card.html" with card_icon="icons/clock.html" card_title="Accurate timekeeping" card_description="Automatic check-in and check-out entries, kept in one row per employee per day, so payroll never has to guess."%}
+    <!--  -->
+    {%include "partials/card.html" with card_icon="icons/history.html" card_title="Auditable history" card_description="Every scan is timestamped and reviewable, giving managers a clear record they can defend."%}
+  </section>
 
-		<div class="md:col-4">
-			<div class="card shadow-sm h-100">
-				<div class="card-body d-flex flex-column gap-2">
-					<span
-						class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start"
-						aria-hidden="true">
-						{% include "icons/clock.html" with px=18 %}
-					</span>
-					<h2 class="h6 mb-0">Accurate timekeeping</h2>
-					<p class="small fg-2 mb-0">Automatic check-in and check-out entries, kept in one row per employee per day, so
-						payroll never has to guess.</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="md:col-4">
-			<div class="card shadow-sm h-100">
-				<div class="card-body d-flex flex-column gap-2">
-					<span
-						class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start"
-						aria-hidden="true">
-						{% include "icons/history.html" with px=18 %}
-					</span>
-					<h2 class="h6 mb-0">Auditable history</h2>
-					<p class="small fg-2 mb-0">Every scan is timestamped and reviewable, giving managers a clear record they can
-						defend.</p>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section class="pb-12">
-		<div class="text-center">
-			<h2 class="h4 fw-semibold">Built By</h2>
-			<p class="fg-2 mb-0">A two-person team designed and shipped the HR Portal.</p>
-		</div>
-		<div class="row gx-6 gy-6 justify-content-center mt-6">
-			<div class="sm:col-6 md:col-4">
-				<div class="card shadow-sm h-100 text-center">
-					<div class="card-body d-flex flex-column align-items-center gap-2">
-							<span class="avatar avatar-lg avatar-subtle theme-primary fw-semibold" area-hdden="true">A</span>
-							<h3 class="h6 mb-0">Ahmed Abuwarda</h3>
-							<p class="small fg-2 mb-0">Lead developer, architecture, WebAuthn passkeys and attendance flows.</p>
-					</div>
-				</div>
-			</div>
-			<div class="sm:col-6 md:col-4">
-				<div class="card shadow-sm h-100 text-center">
-						<div class="card-body d-flex flex-column align-items-center gap-2">
-							<span class="avatar avatar-lg avatar-subtle theme-primary fw-semibold" area-hdden="true">D</span>
-							<h3 class="h6 mb-0">Duaa Abushar</h3>
-							<p class="small fg-2 mb-0">Co-developer, interface design, page templates and the user experience.</p>
-						</div>
-				</div>
-			</div>
-		</div>
-	</section>
+  <section class="pb-12">
+    <div class="text-center">
+      <h2 class="h4 fw-semibold">Built By</h2>
+      <p class="fg-2 mb-0">A two-person team designed and shipped the HR Portal.</p>
+    </div>
+    <div class="row gx-6 gy-6 justify-content-center mt-6">
+      <div class="sm:col-6 md:col-4">
+        <div class="card shadow-sm h-100 text-center">
+          <div class="card-body d-flex flex-column align-items-center gap-2">
+            <span class="avatar avatar-lg avatar-subtle theme-primary fw-semibold" area-hdden="true">A</span>
+            <h3 class="h6 mb-0">Ahmed Abuwarda</h3>
+            <p class="small fg-2 mb-0">Lead developer, architecture, WebAuthn passkeys and attendance flows.</p>
+          </div>
+        </div>
+      </div>
+      <div class="sm:col-6 md:col-4">
+        <div class="card shadow-sm h-100 text-center">
+          <div class="card-body d-flex flex-column align-items-center gap-2">
+            <span class="avatar avatar-lg avatar-subtle theme-primary fw-semibold" area-hdden="true">D</span>
+            <h3 class="h6 mb-0">Duaa Abushar</h3>
+            <p class="small fg-2 mb-0">Co-developer, interface design, page templates and the user experience.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}
