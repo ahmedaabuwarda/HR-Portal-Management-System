@@ -1,0 +1,10 @@
+<div class="md:col-4">
+  <div class="card shadow-sm h-100">
+    <div class="card-body d-flex flex-column gap-2 {{ class_name }}">
+      <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 align-self-start" aria-hidden="true"> {% include card_icon with px=18 %} </span>
+      <h2 class="h6 mb-0">{{ card_title }}</h2>
+      <p class="small fg-2 mb-0">{{ card_description|safe }}</p>
+      <p class="small fg-2 mb-0">{{ other_description|safe }}</p>
+    </div>
+  </div>
+</div>

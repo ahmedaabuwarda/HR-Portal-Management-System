@@ -1,3 +1,13 @@
 {% extends 'layout.html' %} {% block title %}Settings{% endblock %} {% block content %}
-<div class="container">User Settings</div>
+<div class="container py-4 mt-7">
+  <header class="d-flex flex-wrap align-items-center justify-content-between gap-4 mb-7">
+    <div class="d-flex align-items-center gap-3">
+      <span class="avatar avatar-subtle theme-primary fw-semibold" aria-hidden="true">{% include "icons/settings.html" with px=20 %}</span>
+      <div>
+        <h1 class="h3 mb-0">Settings</h1>
+        <p class="fg-2 small mb-0">Manage your account details and fingerprint login.</p>
+      </div>
+    </div>
+  </header>
+</div>
 {% endblock %}
