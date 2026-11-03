@@ -174,6 +174,7 @@
           </h2>
           <p class="small fg-2 mb-0">Your clock-in and clock-out records.</p>
         </div>
+        <!-- Backend add the number of attendance records -->
         <span class="small fg-2"> number of exisit records </span>
       </div>
 
@@ -189,16 +190,20 @@
             </tr>
           </thead>
           <tbody>
+            <!-- Backend loop on records -->
             <tr>
               <td class="text-nowrap">record date</td>
               <td class="text-nowrap">check in time</td>
               <td class="text-nowrap"> 
+                <!-- Backend add logic to display check-out time -->
                 <span class="fg-2">
                 </td>
               <td class="text-nowrap">
+                <!-- Backend add logic to display work duration -->
                  work duration 
                 <span class="badge badge-subtle rounded-pill theme-primary">In progress</span></td>
               <td class="text-nowrap small fg-2">
+                <!-- Backend add logic to display source -->
                 Source
               </td>
             </tr>
@@ -207,7 +212,9 @@
                 <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mb-2"> {% include "icons/calendar-x.html" with px=20 %} </span>
                 <p class="mb-1 fw-medium">No attendance yet</p>
                 <p class="small fg-2 mb-0">
+                  <!-- Backend add logic to display message if the employee have a passkey -->
                   Use the time clock above to clock in.
+                  <!-- Add a fingerprint to start clocking in. -->
                 </p>
               </td>
             </tr>
@@ -215,16 +222,23 @@
         </table>
       </div>
 
+      <!-- Backend logic for pagination to check the number of pages  -->
       <nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" aria-label="Attendance pages">
+        <!-- Backend logic to display current page and total pages -->
         <span class="small fg-2">Page # of total</span>
         <ul class="pagination mb-0">
+          <!-- Backend logic to disable link if there is no previous page -->
           <li class="page-item disabled">
+            <!-- Backend logic to display previous page link if there is a prev. page -->
             <a class="page-link d-inline-flex align-items-center gap-1" href="">{% include "icons/chevron-left.html" with px=14 %}Previous</a>
+            <!-- Backend logic to display text if there is no a prev. page -->
             <span class="page-link d-inline-flex align-items-center gap-1">{% include "icons/chevron-left.html" with px=14 %}Previous</span>
           </li>
           <li class="page-item disabled">
-            <a class="page-link d-inline-flex align-items-center gap-1" href="">Next {% include "icons/chevron-right.html" with px=14 %}</a>
-            <span class="page-link d-inline-flex align-items-center gap-1">Next {% include "icons/chevron-right.html" with px=14 %}</span>
+            <!-- Backend logic to display next page link if there is a next page -->
+            <a class="page-link d-inline-flex align-items-center gap-1" href="">Next{% include "icons/chevron-right.html" with px=14 %}</a>
+            <!-- Backend logic to display text if there is no next page -->
+            <span class="page-link d-inline-flex align-items-center gap-1">Next{% include "icons/chevron-right.html" with px=14 %}</span>
             
           </li>
         </ul>
