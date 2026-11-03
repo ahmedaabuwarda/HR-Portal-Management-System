@@ -24,14 +24,21 @@
                         Profile
                     </h2>
                     <p class="small fg-2 mb-4">Update the name and email tied to your account.</p>
+<<<<<<< HEAD
                     
                     <!-- User editing form to edit first, last name & email -->
                     <form method="post" action="{% url 'settings' %}" novalidate>
+=======
+                    <!-- Backend add action -->
+                    <!-- User editing form to edit first, last name & email -->
+                    <form method="post" action="" novalidate>
+>>>>>>> 96edad3 (Add settings page and update templates)
                         {% csrf_token %}
                         <input type="hidden" name="action" value="profile" />
                         <div class="row gx-3 gy-3">
                             <div class="col-12 sm:col-6">
                                 <label class="form-label" for="first_name">First name</label>
+<<<<<<< HEAD
                                 <input class="form-control" id="first_name" name="first_name" type="text" value="{{ account.first_name }}" autocomplete="given-name" required />
                             </div>
                             <div class="col-12 sm:col-6">
@@ -41,6 +48,20 @@
                             <div class="col-12">
                                 <label class="form-label" for="email">Email address</label>
                                 <input class="form-control" id="email" name="email" value="{{ account.email }}"  type="email" autocomplete="email" required />
+=======
+                                <!-- backend data displaying for first name -->
+                                <input class="form-control" id="first_name" name="first_name" type="text"  autocomplete="given-name" required />
+                            </div>
+                            <div class="col-12 sm:col-6">
+                                <label class="form-label" for="last_name">Last name</label>
+                                <!-- backend data displaying for last name -->
+                                <input class="form-control" id="last_name" name="last_name" type="text"  autocomplete="family-name" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="email">Email address</label>
+                                <!-- backend data displaying for email -->
+                                <input class="form-control" id="email" name="email" type="email" autocomplete="email" required />
+>>>>>>> 96edad3 (Add settings page and update templates)
                             </div>
                         </div>
                         <button class="btn btn-solid theme-primary mt-4 d-inline-flex align-items-center gap-2" type="submit">{% include "icons/check.html" with px=16 %} Save changes</button>
@@ -55,8 +76,14 @@
                         Password
                     </h2>
                     <p class="small fg-2 mb-4">Enter your current password to set a new one.</p>
+<<<<<<< HEAD
                      <!-- User editing form to edit password -->
                     <form action="{% url 'settings' %}" method="post" novalidate>
+=======
+                    <!-- Backend add action -->
+                     <!-- User editing form to edit password -->
+                    <form action="" method="post" novalidate>
+>>>>>>> 96edad3 (Add settings page and update templates)
                         {% csrf_token %}
                         <input type="hidden" name="action" value="password" />
 
@@ -89,6 +116,7 @@
                         Fingerprint
                     </h2>
                     <p class="small fg-2 mb-4">Enroll the fingerprint, face, or screen lock built into this device (Windows Hello, Touch ID, Face ID, Android biometrics). Your fingerprint never leaves the device.</p>
+<<<<<<< HEAD
                     {% if passkeys %}
                     <ul class="list-unstyled mb-4">
                        {% for passkey in passkeys %}
@@ -97,15 +125,32 @@
                             <div class="flex-grow-1">
                                 <span class="d-block small fw-medium">{{ passkey.label }}</span>
                                 <span class="d-block small fg-2">Added {{ passkey.created_at|date:"M j, Y" }}</span>
+=======
+                    <!-- Add  backend if condition  -->
+                    <ul class="list-unstyled mb-4">
+                        <!--backend Start for loop here -->
+                        <li class="d-flex align-items-center justify-content-between gap-3 border-bottom py-3">
+                            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0"> {% include "icons/fingerprint.html" with px=16 %} </span>
+                            <div class="flex-grow-1">
+                                <!-- backend add passkey label -->
+                                <span class="d-block small fw-medium">label</span>
+                                <!-- backend add passkey created at -->
+                                <span class="d-block small fg-2">Added at</span>
+>>>>>>> 96edad3 (Add settings page and update templates)
                             </div>
                             <!-- this button to open remove passkey dialog  -->
                             <button class="btn btn-sm btn-outline theme-danger d-inline-flex align-items-center gap-1" type="button" data-bs-toggle="dialog" data-bs-target="#remove-passkey-{{ passkey.id }}" aria-haspopup="dialog">
                                 {% include "icons/trash.html" with px=14 %} Remove
                             </button>
                         </li>
+<<<<<<< HEAD
                         {% endfor %}
                     </ul>
                      {% for passkey in passkeys %}
+=======
+                    </ul>
+                    <!-- backend for loop -->
+>>>>>>> 96edad3 (Add settings page and update templates)
                     <dialog class="dialog position-fixed" id="remove-passkey-{{ passkey.id }}" aria-labelledby="remove-passkey-title-{{ passkey.id }}">
                             <!-- Dialog header conatins the header, title, and remove button -->
                             <div class="dialog-header">
@@ -115,21 +160,33 @@
                             <!-- Dialog body conatians the message  -->
                             <div class="dialog-body">
                                 <p class="mb-0">Remove <span class="fw-medium">{{ passkey.label }}</span> from your account? You can enroll it again later.</p>
+<<<<<<< HEAD
                                 {% if passkeys|length == 1 %}
                                 <div class="alert theme-warning small mt-3 mb-0">This is your only fingerprint. Removing it disables fingerprint sign-in and dashboard clocking until you add another.</div>
                                 {% endif %}
+=======
+                                <!-- backend add if condition -->
+                                <div class="alert theme-warning small mt-3 mb-0">This is your only fingerprint. Removing it disables fingerprint sign-in and dashboard clocking until you add another.</div>
+>>>>>>> 96edad3 (Add settings page and update templates)
                             </div>
                             <!-- Dialog footer contains the action buttons -->
                              <div class="dialog-footer">
                                 <!-- Close dialog button -->
                                 <button type="button" class="btn btn-solid theme-secondary" data-bs-dismiss="dialog">Cancel</button>
+<<<<<<< HEAD
                                  <!-- this form to send request of delete to the backend -->
                                 <form method="post" action="{% url 'user.passkey_delete' passkey.id %}">
+=======
+                                <!-- backend add action to the form -->
+                                 <!-- this form to send request of delete to the backend -->
+                                <form method="post" action="">
+>>>>>>> 96edad3 (Add settings page and update templates)
                                     {% csrf_token %}
                                     <button class="btn btn-solid theme-danger d-inline-flex align-items-center gap-2" type="submit">{% include "icons/trash.html" with px=16 %} Remove fingerprint</button>
                                 </form>
                             </div>
                     </dialog>
+<<<<<<< HEAD
                     {% endfor %} 
                     {% else %}
                     <!-- this section to add a new fingerprint if the user don't have any -->
@@ -137,15 +194,26 @@
                     {% endif %}
                     <label class="form-label" for="passkey_label">Device name</label>
                     <input class="form-control" id="passkey_label" type="text" maxlength="100" placeholder="e.g. Office laptop" />
+=======
+                    <!-- this section to add a new fingerprint if the user don't have any -->
+                    <p class="small fg-2 mb-4 d-flex align-items-center gap-2">{% include "icons/fingerprint.html" with px=16 %} No fingerprints enrolled yet.</p>
+                    <label class="form-label" for="passkey_label">Device name</label>
+                    <input class="form-control" id="passkey_label" type="text" maxlength="100" placeholder="e.g. Office laptop" />
+                    <!-- backend add urls -->
+>>>>>>> 96edad3 (Add settings page and update templates)
                      <!-- This button to add a new fingerprint -->
                     <button
                             class="btn btn-outline theme-primary mt-3 d-inline-flex align-items-center gap-2"
                             id="passkey_register"
                             type="button"
+<<<<<<< HEAD
                             aria-describedby="passkey_error"
                             data-begin-url="{% url 'user.passkey_register_begin' %}"
                             data-complete-url="{% url 'user.passkey_register_complete' %}">
 
+=======
+                            aria-describedby="passkey_error">
+>>>>>>> 96edad3 (Add settings page and update templates)
                             {% include "icons/fingerprint.html" with px=18 %} Add fingerprint
                     </button>
                     <div class="alert py-3 px-4 small mt-3 mb-0 d-none" id="passkey_error" role="status" aria-live="polite"></div>
