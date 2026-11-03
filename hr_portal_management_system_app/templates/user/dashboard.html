@@ -128,8 +128,9 @@
             <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0"> {% include "icons/calendar-check.html" with px=16 %} </span>
             <p class="small fg-2 mb-0">Attendance today</p>
           </div>
-            <p class="h3 mb-1">1, 0</p>
-            <p class="small fg-2 mb-0">One record per workday.</p>
+          <!-- Backend add condition to display appropriate value 1 for today attendance & 0 for not -->
+          <p class="h3 mb-1">1</p>
+          <p class="small fg-2 mb-0">One record per workday.</p>
         </div>
       </div>
     </div>
@@ -140,7 +141,7 @@
             <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0"> {% include "icons/fingerprint.html" with px=16 %} </span>
             <p class="small fg-2 mb-0">Your fingerprints</p>
           </div>
-          <!--  -->
+          <!-- backend add number of passkeys   -->
           <p class="h3 mb-1">number of passkeys</p>
           <p class="small fg-2 mb-0">Manage them in Settings.</p>
         </div>
@@ -153,7 +154,7 @@
             <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0"> {% include "icons/clock.html" with px=16 %} </span>
             <p class="small fg-2 mb-0">Open clock-ins</p>
           </div>
-          <!--  -->
+          <!-- backend add number of open clock-ins -->
           <p class="h3 mb-1">number of check in but not check out</p>
           <p class="small fg-2 mb-0">Updated by your fingerprint scans.</p>
         </div>
