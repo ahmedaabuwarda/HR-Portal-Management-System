@@ -1,0 +1,17 @@
+[33mcommit 96edad305a8641b4737db49edc7c9810669887b8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdoaa-dashboard[m[33m)[m
+Author: Doaa Abushar <Doaa.abuShar@gmail.com>
+Date:   Tue Nov 3 18:47:03 2026 +0500
+
+    Add settings page and update templates
+
+ .../templates/icons/calendar-check.html            |   1 [32m+[m
+ .../templates/icons/calendar-x.html                |   1 [32m+[m
+ .../templates/icons/check.html                     |  15 [32m++[m
+ .../templates/icons/chevron-left.html              |   1 [32m+[m
+ .../templates/icons/chevron-right.html             |   1 [32m+[m
+ .../templates/icons/dot.html                       |   1 [32m+[m
+ .../templates/icons/key-round.html                 |  16 [32m++[m
+ .../templates/icons/trash.html                     |   1 [32m+[m
+ .../templates/icons/user.html                      |  16 [32m++[m
+ .../templates/user/settings.html                   | 165 [32m+++++++++++++++++++[m[31m--[m
+ 10 files changed, 208 insertions(+), 10 deletions(-)
