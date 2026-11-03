@@ -35,49 +35,85 @@
   </header>
 
 
-<!-- Section 1 time clock -->
+<!-- Section 1 Time clock -->
   <div class="card shadow-sm mb-4" id="time-clock" aria-labelledby="time-clock-title">
     <div class="card-body">
       <div class="d-flex flex-column md:flex-row md:align-items-center justify-content-between gap-4">
         <div class="d-flex align-items-start gap-3">
-            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/fingerprint.html" with px=22 %} </span>
-            <div>
-              <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                <h2 class="h5 mb-0" id="time-clock-title">Time Clock</h2>
-                <span class="badge badge-subtle rounded-pill theme-success">Complete</span>
-              </div>
-              <p class="mb-0 fg-2" id="time-clock-status">
-                Clocked out at . Today's attendance is complete. 
-              </p>
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/fingerprint.html" with px=22 %} </span>
+          <div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+              <h2 class="h5 mb-0" id="time-clock-title">Time clock</h2>
+              <!-- backend add conditions to check employee attendance status -->
+              <!-- <span class="badge badge-subtle rounded-pill theme-success">Complete</span> -->
+              <!-- condition for employee on the clock -->
+              <!-- <span class="badge badge-subtle rounded-pill theme-primary">On the clock</span> -->
+              <!-- condition for employee with setup needed if he don't have passkey -->
+              <!-- <span class="badge badge-subtle rounded-pill theme-warning">Setup needed</span> -->
+              <!-- condition for employee not clocked in -->
+              
             </div>
-          </div>
-        <div class="d-flex flex-column gap-2 align-items-stretch">
-          <button
-              type="button"
-              id="attendance_action" 
-              aria-describedby="attendance_hint"
-            >
-            {% include "icons/check.html" with px=18 %}
-            {% include "icons/fingerprint.html" with px=18 %}
-              <span id="attendance_action_label"> 
-                Day complete
-                <!-- Check out -->
-              <!-- Check in -->
-              </span>
-            </button>
-            <p class="small fg-2 mb-0 text-center" id="attendance_hint" aria-live="polite">Today's attendance is complete.</p>
-            <div class="alert py-3 px-4 small mb-0 d-none" id="attendance_error" role="status" aria-live="polite"></div>
-            <a href="{% url 'user.settings' %}" class="btn btn-outline theme-primary d-inline-flex align-items-center justify-content-center gap-2"> {% include "icons/fingerprint.html" with px=18 %} Add a fingerprint </a>
-            <p class="small fg-2 mb-0 text-center">
-              backend add condition
-              Enroll a fingerprint to check out.
-              backend add condition
-              Enroll once, then clock in from here.
+            <p class="mb-0 fg-2" id="time-clock-status">
+              <!-- backend add condition to diplay text if the employee is clocked out -->
+               Clocked out at <!-- Add time --> Today's attendance is complete. 
+              <!-- backend add condition to diplay text if the employee is clocked in but not clocked out -->
+               Clocked in at <!-- Add time --> You're on the clock.
+              <!-- backend add new condition to check the passkey count if he have passkey -->
+               Add a fingerprint to check out.
+               <!-- backend add condition to display text if the employee don't have a passkey and don't have attendance records -->
+               Add a fingerprint to check in and out from
+              this page.  Start your day with a quick fingerprint scan.
             </p>
           </div>
         </div>
-      </div>     
+
+        <div class="d-flex flex-column gap-2 align-items-stretch">
+          <!-- backend add condition to check if employee has a passkey then show attendance action button -->
+          <!-- Attendance action button -->
+           <!-- Backend add data-attendance-action logic -->
+            <!-- Backend add data-begin-url and data-complete-url -->
+             <!-- Backend add logic for handling different attendance states in aria-describedby to disable button -->
+          <button
+            type="button"
+            class="btn {% if today_attendance.check_out %}btn-outline theme-success{% else %}btn-solid theme-primary{% endif %} d-inline-flex align-items-center justify-content-center gap-2"
+            id="attendance_action"
+            data-attendance-action=" done, out, in"
+            data-begin-url=""
+            data-complete-url=""
+            data-dashboard-url="{% url 'dashboard' %}"
+            aria-describedby="attendance_hint"
+            disabled
+          >
+            <!-- backend add condition to display appropriate icon -->
+            {% include "icons/check.html" with px=18 %}
+            <!--  Here-->
+            <!-- {% include "icons/fingerprint.html" with px=18 %} -->
+            
+            <span id="attendance_action_label"> 
+              <!-- Backend add condition to display appropriate label -->
+              Day complete
+              <!-- Here  -->
+              Check out
+              <!-- Here -->
+              Check in
+            </span>
+          </button>
+          <p class="small fg-2 mb-0 text-center" id="attendance_hint" aria-live="polite">
+            <!-- Backend add condition to display appropriate hint text or message -->
+            Today's attendance is complete.
+            <!-- Here -->
+            Uses your device fingerprint.
+          </p>
+          <div class="alert py-3 px-4 small mb-0 d-none" id="attendance_error" role="status" aria-live="polite"></div>
+          <a href="{% url 'user.settings' %}" class="btn btn-outline theme-primary d-inline-flex align-items-center justify-content-center gap-2"> {% include "icons/fingerprint.html" with px=18 %} Add a fingerprint </a>
+          <p class="small fg-2 mb-0 text-center">
+            <!-- Backend add condition to display appropriate text if the employee clocked in but not out -->
+            Enroll a fingerprint to check out.
+            <!-- Here -->
+            Enroll once, then clock in from here.
+           </p>
+          
+        </div>
+      </div>
     </div>
   </div>
-  </div>
-  
