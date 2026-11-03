@@ -13,4 +13,7 @@ urlpatterns = [
 
     path('dashboard', views.dashboard, name='dashboard'),
     path('settings', views.settings, name='settings'),
+    path("user/passkeys/register/begin", views.passkey_register_begin, name="user.passkey_register_begin"),
+    path("user/passkeys/register/complete", views.passkey_register_complete, name="user.passkey_register_complete"),
+
 ]
