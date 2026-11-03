@@ -10,21 +10,27 @@
         <p class="fg-2 small mb-0">Here's where your day stands.</p>
       </div>
     </div>
+    <!-- Add condition to check attendance status -->
     <div class="d-flex flex-column align-items-start md:align-items-end gap-1">
       <!-- Attendance Status, first case -->
+       <!-- backend add condition if the employee is clocked out -->
       <span class="badge badge-subtle badge-lg rounded-pill theme-success text-nowrap">
         {% include "icons/check.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Clocked out at
       </span>
       <span class="small fg-2">Today's attendance is complete.</span>
+      <!-- backend add condition if the employee is clocked in -->
+
+      <!-- 
       <span class="badge badge-subtle badge-lg rounded-pill theme-primary text-nowrap">
         {% include "icons/dot.html" with px=14 class_name="flex-shrink-0" %} Clocked in at 
       </span>
-      <span class="small fg-2">You're on the clock.</span>
-      <span class="badge badge-subtle badge-lg rounded-pill theme-secondary text-nowrap"> {% include "icons/clock.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Not clocked in yet </span>
+      <span class="small fg-2">You're on the clock.</span> -->
+
+      <!-- backend add condition if the employee is not clocked in -->
+      <!-- <span class="badge badge-subtle badge-lg rounded-pill theme-secondary text-nowrap"> {% include "icons/clock.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Not clocked in yet </span>
       <span class="small fg-2">
-        Use the time clock below, or sign in with your fingerprint. 
-        <!-- Add a fingerprint to start using the time clock. -->
-        </span>
+        Use the time clock below, or sign in with your fingerprint. Add a fingerprint to start using the time clock.
+        </span> -->
     </div>
   </header>
 
