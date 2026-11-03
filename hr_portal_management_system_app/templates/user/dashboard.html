@@ -1,13 +1,31 @@
-{% extends 'layout.html' %} {%block title%}Dashboard{%endblock%} {% block content %}
+{% extends "layout.html" %} 
+{%block title%}Dashboard{%endblock%}
+{%block content%}
 <div class="container py-4 mt-7">
   <header class="d-flex flex-wrap align-items-center justify-content-between gap-4 mb-7">
     <div class="d-flex align-items-center gap-3">
       <span class="avatar avatar-subtle theme-primary fw-semibold" aria-hidden="true">{{ request.session.user_first_name|first|upper }}</span>
       <div>
-        <h1 class="h3 mb-0">Hello Welcome back, {{ request.session.user_first_name }}</h1>
+        <h1 class="h3 mb-0">Welcome back, {{ request.session.user_first_name }}</h1>
         <p class="fg-2 small mb-0">Here's where your day stands.</p>
       </div>
     </div>
+    <div class="d-flex flex-column align-items-start md:align-items-end gap-1">
+      <!-- Attendance Status, first case -->
+      <span class="badge badge-subtle badge-lg rounded-pill theme-success text-nowrap">
+        {% include "icons/check.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Clocked out at
+      </span>
+      <span class="small fg-2">Today's attendance is complete.</span>
+      <span class="badge badge-subtle badge-lg rounded-pill theme-primary text-nowrap">
+        {% include "icons/dot.html" with px=14 class_name="flex-shrink-0" %} Clocked in at 
+      </span>
+      <span class="small fg-2">You're on the clock.</span>
+      <span class="badge badge-subtle badge-lg rounded-pill theme-secondary text-nowrap"> {% include "icons/clock.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Not clocked in yet </span>
+      <span class="small fg-2">
+        Use the time clock below, or sign in with your fingerprint. 
+        <!-- Add a fingerprint to start using the time clock. -->
+        </span>
+    </div>
   </header>
-</div>
-{% endblock %}
+
+  
