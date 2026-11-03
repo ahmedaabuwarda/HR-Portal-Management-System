@@ -161,3 +161,75 @@
       </div>
     </div>
   </div>
+
+
+  <!-- Section 3 Attendance history -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+          <h2 class="h5 mb-0 d-flex align-items-center gap-2">
+            <span class="fg-primary d-inline-flex">{% include "icons/history.html" with px=18 %}</span>
+            Attendance history
+          </h2>
+          <p class="small fg-2 mb-0">Your clock-in and clock-out records.</p>
+        </div>
+        <span class="small fg-2"> number of exisit records </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Check in</th>
+              <th scope="col">Check out</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-nowrap">record date</td>
+              <td class="text-nowrap">check in time</td>
+              <td class="text-nowrap"> 
+                <span class="fg-2">
+                </td>
+              <td class="text-nowrap">
+                 work duration 
+                <span class="badge badge-subtle rounded-pill theme-primary">In progress</span></td>
+              <td class="text-nowrap small fg-2">
+                Source
+              </td>
+            </tr>
+            <tr>
+              <td colspan="5" class="text-center py-5">
+                <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mb-2"> {% include "icons/calendar-x.html" with px=20 %} </span>
+                <p class="mb-1 fw-medium">No attendance yet</p>
+                <p class="small fg-2 mb-0">
+                  Use the time clock above to clock in.
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" aria-label="Attendance pages">
+        <span class="small fg-2">Page # of total</span>
+        <ul class="pagination mb-0">
+          <li class="page-item disabled">
+            <a class="page-link d-inline-flex align-items-center gap-1" href="">Previous</a>
+            <span class="page-link d-inline-flex align-items-center gap-1">Previous</span>
+          </li>
+          <li class="page-item disabled">
+            <a class="page-link d-inline-flex align-items-center gap-1" href="">Next</a>
+            <span class="page-link d-inline-flex align-items-center gap-1">Next</span>
+            
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+{% endblock %}
