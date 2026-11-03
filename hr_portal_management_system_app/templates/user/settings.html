@@ -1,13 +1,158 @@
-{% extends 'layout.html' %} {% block title %}Settings{% endblock %} {% block content %}
+{% extends "layout.html" %} 
+{% block title %}Settings{% endblock %} {% block content %}
+
 <div class="container py-4 mt-7">
-  <header class="d-flex flex-wrap align-items-center justify-content-between gap-4 mb-7">
-    <div class="d-flex align-items-center gap-3">
-      <span class="avatar avatar-subtle theme-primary fw-semibold" aria-hidden="true">{% include "icons/settings.html" with px=20 %}</span>
-      <div>
-        <h1 class="h3 mb-0">Settings</h1>
-        <p class="fg-2 small mb-0">Manage your account details and fingerprint login.</p>
-      </div>
+    <header class="d-flex flex-wrap align-items-center justify-content-between gap-4 mb-7">
+        <div class="d-flex align-items-center gap-3">
+            <!-- Include the icons of this page  -->
+            <span class="avatar avatar-subtle theme-primary fw-semibold" aria-hidden="true">{% include "icons/settings.html" with px=20 %}</span>
+            <div>
+                <h1 class="h3 mb-0">Settings</h1>
+                <p class="fg-2 small mb-0">Manage your account details and fingerprint login.</p> 
+            </div>           
+        </div>
+    </header>
+    <!-- Profile Settings -->
+     <!-- two sections in the page -->
+    <div class="row gx-4 gy-4">
+        <div class="col-12 lg:col-7">
+            <!-- first section: Profile section -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-1 d-flex align-items-center gap-2">
+                        <span class="fg-primary d-inline-flex">{% include "icons/user.html" with px=18 %}</span>
+                        Profile
+                    </h2>
+                    <p class="small fg-2 mb-4">Update the name and email tied to your account.</p>
+                    <!-- Backend add action -->
+                    <!-- User editing form to edit first, last name & email -->
+                    <form method="post" action="" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="profile" />
+                        <div class="row gx-3 gy-3">
+                            <div class="col-12 sm:col-6">
+                                <label class="form-label" for="first_name">First name</label>
+                                <!-- backend data displaying for first name -->
+                                <input class="form-control" id="first_name" name="first_name" type="text"  autocomplete="given-name" required />
+                            </div>
+                            <div class="col-12 sm:col-6">
+                                <label class="form-label" for="last_name">Last name</label>
+                                <!-- backend data displaying for last name -->
+                                <input class="form-control" id="last_name" name="last_name" type="text"  autocomplete="family-name" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="email">Email address</label>
+                                <!-- backend data displaying for email -->
+                                <input class="form-control" id="email" name="email" type="email" autocomplete="email" required />
+                            </div>
+                        </div>
+                        <button class="btn btn-solid theme-primary mt-4 d-inline-flex align-items-center gap-2" type="submit">{% include "icons/check.html" with px=16 %} Save changes</button>
+                    </form>
+                </div>
+            </div>
+            <!-- User editing form to edit password -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-1 d-flex align-items-center gap-2">
+                        <span class="fg-primary d-inline-flex">{% include "icons/key-round.html" with px=18 %}</span>
+                        Password
+                    </h2>
+                    <p class="small fg-2 mb-4">Enter your current password to set a new one.</p>
+                    <!-- Backend add action -->
+                     <!-- User editing form to edit password -->
+                    <form action="" method="post" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="password" />
+
+                        <div class="mb-3">
+                            <label class="form-label" for="current_password">Current password</label>
+                            <input class="form-control" id="current_password" name="current_password" type="password" autocomplete="current-password" required />
+                        </div>
+
+                        <div class="row gx-3 gy-3">
+                            <div class="col-12 sm:col-6">
+                                <label class="form-label" for="new_password">New password</label>
+                                <input class="form-control" id="new_password" name="new_password" type="password" autocomplete="new-password" required />
+                            </div>
+                            <div class="col-12 sm:col-6">
+                                <label class="form-label" for="confirm_password">Confirm new password</label>
+                                <input class="form-control" id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required />
+                            </div>
+                        </div>
+                        <button class="btn btn-solid theme-primary mt-4 d-inline-flex align-items-center gap-2" type="submit">{% include "icons/key-round.html" with px=16 %} Update password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Third section fingerprint section. -->
+        <div class="col-12 lg:col-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-body" >
+                    <h2 class="h5 mb-1 d-flex align-items-center gap-2">
+                        <span class="fg-primary d-inline-flex">{% include "icons/fingerprint.html" with px=18 %}</span>
+                        Fingerprint
+                    </h2>
+                    <p class="small fg-2 mb-4">Enroll the fingerprint, face, or screen lock built into this device (Windows Hello, Touch ID, Face ID, Android biometrics). Your fingerprint never leaves the device.</p>
+                    <!-- Add  backend if condition  -->
+                    <ul class="list-unstyled mb-4">
+                        <!--backend Start for loop here -->
+                        <li class="d-flex align-items-center justify-content-between gap-3 border-bottom py-3">
+                            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0"> {% include "icons/fingerprint.html" with px=16 %} </span>
+                            <div class="flex-grow-1">
+                                <!-- backend add passkey label -->
+                                <span class="d-block small fw-medium">label</span>
+                                <!-- backend add passkey created at -->
+                                <span class="d-block small fg-2">Added at</span>
+                            </div>
+                            <!-- this button to open remove passkey dialog  -->
+                            <button class="btn btn-sm btn-outline theme-danger d-inline-flex align-items-center gap-1" type="button" data-bs-toggle="dialog" data-bs-target="#remove-passkey-{{ passkey.id }}" aria-haspopup="dialog">
+                                {% include "icons/trash.html" with px=14 %} Remove
+                            </button>
+                        </li>
+                    </ul>
+                    <!-- backend for loop -->
+                    <dialog class="dialog position-fixed" id="remove-passkey-{{ passkey.id }}" aria-labelledby="remove-passkey-title-{{ passkey.id }}">
+                            <!-- Dialog header conatins the header, title, and remove button -->
+                            <div class="dialog-header">
+                                <h2 class="dialog-title" id="remove-passkey-title-{{ passkey.id }}">Remove fingerprint?</h2>
+                                <button type="button" class="btn-close" data-bs-dismiss="dialog" aria-label="Close"></button>
+                            </div>
+                            <!-- Dialog body conatians the message  -->
+                            <div class="dialog-body">
+                                <p class="mb-0">Remove <span class="fw-medium">{{ passkey.label }}</span> from your account? You can enroll it again later.</p>
+                                <!-- backend add if condition -->
+                                <div class="alert theme-warning small mt-3 mb-0">This is your only fingerprint. Removing it disables fingerprint sign-in and dashboard clocking until you add another.</div>
+                            </div>
+                            <!-- Dialog footer contains the action buttons -->
+                             <div class="dialog-footer">
+                                <!-- Close dialog button -->
+                                <button type="button" class="btn btn-solid theme-secondary" data-bs-dismiss="dialog">Cancel</button>
+                                <!-- backend add action to the form -->
+                                 <!-- this form to send request of delete to the backend -->
+                                <form method="post" action="">
+                                    {% csrf_token %}
+                                    <button class="btn btn-solid theme-danger d-inline-flex align-items-center gap-2" type="submit">{% include "icons/trash.html" with px=16 %} Remove fingerprint</button>
+                                </form>
+                            </div>
+                    </dialog>
+                    <!-- this section to add a new fingerprint if the user don't have any -->
+                    <p class="small fg-2 mb-4 d-flex align-items-center gap-2">{% include "icons/fingerprint.html" with px=16 %} No fingerprints enrolled yet.</p>
+                    <label class="form-label" for="passkey_label">Device name</label>
+                    <input class="form-control" id="passkey_label" type="text" maxlength="100" placeholder="e.g. Office laptop" />
+                    <!-- backend add urls -->
+                     <!-- This button to add a new fingerprint -->
+                    <button
+                            class="btn btn-outline theme-primary mt-3 d-inline-flex align-items-center gap-2"
+                            id="passkey_register"
+                            type="button"
+                            aria-describedby="passkey_error">
+                            {% include "icons/fingerprint.html" with px=18 %} Add fingerprint
+                    </button>
+                    <div class="alert py-3 px-4 small mt-3 mb-0 d-none" id="passkey_error" role="status" aria-live="polite"></div>
+                </div>
+
+            </div>
+        </div>
     </div>
-  </header>
 </div>
 {% endblock %}
