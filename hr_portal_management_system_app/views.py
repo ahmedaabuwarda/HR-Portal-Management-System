@@ -22,6 +22,25 @@ def begin_session(request, user):
     request.session['user_id'] = user.id
     request.session['user_first_name'] = user.first_name
 
+# This method check if the user currently logged in , and return user object
+def current_user(request):
+    # get user id from current session
+    user_id = request.session.get('user_id')
+    # if no user id in session, return None
+    if not user_id:
+        return None
+    # else, find the user and return user information
+    return User.objects.filter(id=user_id).first()
+
+def revoke_other_sessions(user, current_key):
+    for session in Session.objects.filter(expire_date__gte=timezone.now()):
+        try:
+            data = session.get_decoded()
+        except Exception:
+            continue
+
+        if data.get('user_id') == user.id and session.session_key != current_key:
+            session.delete()
 
 # ---------- Public pages ----------
 
@@ -214,22 +233,3 @@ def passkey_register_complete(request):
     pass
 
 
-# This method check if the user currently logged in , and return user object
-def current_user(request):
-    # get user id from current session
-    user_id = request.session.get('user_id')
-    # if no user id in session, return None
-    if not user_id:
-        return None
-    # else, find the user and return user information
-    return User.objects.filter(id=user_id).first()
-
-def revoke_other_sessions(user, current_key):
-    for session in Session.objects.filter(expire_date__gte=timezone.now()):
-        try:
-            data = session.get_decoded()
-        except Exception:
-            continue
-
-        if data.get('user_id') == user.id and session.session_key != current_key:
-            session.delete()
