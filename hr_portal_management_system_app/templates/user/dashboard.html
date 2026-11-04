@@ -12,25 +12,23 @@
     </div>
     <!-- Add condition to check attendance status -->
     <div class="d-flex flex-column align-items-start md:align-items-end gap-1">
+      {% if today_attendance.check_out %}
       <!-- Attendance Status, first case -->
-       <!-- backend add condition if the employee is clocked out -->
       <span class="badge badge-subtle badge-lg rounded-pill theme-success text-nowrap">
-        {% include "icons/check.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Clocked out at
+        {% include "icons/check.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Clocked out at {{ today_attendance.check_out|date:"g:i A" }}
       </span>
       <span class="small fg-2">Today's attendance is complete.</span>
-      <!-- backend add condition if the employee is clocked in -->
-
-      <!-- 
+      {% elif today_attendance %}
       <span class="badge badge-subtle badge-lg rounded-pill theme-primary text-nowrap">
-        {% include "icons/dot.html" with px=14 class_name="flex-shrink-0" %} Clocked in at 
+        {% include "icons/dot.html" with px=14 class_name="flex-shrink-0" %} Clocked in at {{ today_attendance.check_in|date:"g:i A" }}
       </span>
-      <span class="small fg-2">You're on the clock.</span> -->
-
-      <!-- backend add condition if the employee is not clocked in -->
-      <!-- <span class="badge badge-subtle badge-lg rounded-pill theme-secondary text-nowrap"> {% include "icons/clock.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Not clocked in yet </span>
+      <span class="small fg-2">You're on the clock.</span>
+      {% else %}
+      <span class="badge badge-subtle badge-lg rounded-pill theme-secondary text-nowrap"> {% include "icons/clock.html" with px=14 sw=2.5 class_name="flex-shrink-0" %} Not clocked in yet </span>
       <span class="small fg-2">
-        Use the time clock below, or sign in with your fingerprint. Add a fingerprint to start using the time clock.
-        </span> -->
+       {% if passkey_count %}Use the time clock below, or sign in with your fingerprint.{% else %}Add a fingerprint to start using the time clock.{% endif %} 
+        </span>
+      {% endif %}
     </div>
   </header>
 
@@ -44,73 +42,91 @@
           <div>
             <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
               <h2 class="h5 mb-0" id="time-clock-title">Time clock</h2>
-              <!-- backend add conditions to check employee attendance status -->
-              <!-- <span class="badge badge-subtle rounded-pill theme-success">Complete</span> -->
-              <!-- condition for employee on the clock -->
-              <!-- <span class="badge badge-subtle rounded-pill theme-primary">On the clock</span> -->
-              <!-- condition for employee with setup needed if he don't have passkey -->
-              <!-- <span class="badge badge-subtle rounded-pill theme-warning">Setup needed</span> -->
-              <!-- condition for employee not clocked in -->
+              {% if today_attendance.check_out %}
+              <span class="badge badge-subtle rounded-pill theme-success">Complete</span>
+              {% elif today_attendance %}
+              <span class="badge badge-subtle rounded-pill theme-primary">On the clock</span>
+              {% elif not passkey_count %}
+              <span class="badge badge-subtle rounded-pill theme-warning">Setup needed</span>
+              {% else %}
+              <span class="badge badge-subtle rounded-pill theme-secondary">Not clocked in</span>
+              {% endif %}
               
             </div>
             <p class="mb-0 fg-2" id="time-clock-status">
-              <!-- backend add condition to diplay text if the employee is clocked out -->
-               Clocked out at <!-- Add time --> Today's attendance is complete. 
-              <!-- backend add condition to diplay text if the employee is clocked in but not clocked out -->
-               Clocked in at <!-- Add time --> You're on the clock.
-              <!-- backend add new condition to check the passkey count if he have passkey -->
-               Add a fingerprint to check out.
-               <!-- backend add condition to display text if the employee don't have a passkey and don't have attendance records -->
-               Add a fingerprint to check in and out from
-              this page.  Start your day with a quick fingerprint scan.
+              {% if today_attendance.check_out %}
+               Clocked out at {{ today_attendance.check_out|date:"g:i A" }}. 
+               Today's attendance is complete.
+              {% elif today_attendance %}
+                Clocked in at {{today_attendance.check_in|date:"g:i A" }}. You're on the clock.
+                  {% if not passkey_count %} 
+                  Add a fingerprint to check out.
+                  {% endif %}
+              {% elif not passkey_count %} 
+              Add a fingerprint to check in and out from this page.
+              {% else %} 
+              Start your day with a quick fingerprint scan. 
+              {% endif %}
             </p>
           </div>
         </div>
 
         <div class="d-flex flex-column gap-2 align-items-stretch">
-          <!-- backend add condition to check if employee has a passkey then show attendance action button -->
+          {% if passkey_count %}
           <!-- Attendance action button -->
-           <!-- Backend add data-attendance-action logic -->
-            <!-- Backend add data-begin-url and data-complete-url -->
-             <!-- Backend add logic for handling different attendance states in aria-describedby to disable button -->
+          <!--  logic for handling different attendance states in aria-describedby to disable button -->
           <button
-            type="button"
-            class="btn {% if today_attendance.check_out %}btn-outline theme-success{% else %}btn-solid theme-primary{% endif %} d-inline-flex align-items-center justify-content-center gap-2"
+           type="button"
+            class="btn 
+              {% if today_attendance.check_out %}
+              btn-outline theme-success
+              {% else %}
+              btn-solid theme-primary
+              {% endif %} d-inline-flex align-items-center justify-content-center gap-2"
             id="attendance_action"
-            data-attendance-action=" done, out, in"
-            data-begin-url=""
-            data-complete-url=""
+            data-attendance-action="
+              {% if today_attendance.check_out %}
+              done
+              {% elif today_attendance %}out{% else %}in{% endif %}"
+            data-begin-url="{% url 'user.attendance_begin' %}"
+            data-complete-url="{% url 'user.attendance_complete' %}"
             data-dashboard-url="{% url 'dashboard' %}"
             aria-describedby="attendance_hint"
+            {%if today_attendance.check_out %}
             disabled
+            {% endif %}
           >
-            <!-- backend add condition to display appropriate icon -->
+            {% if today_attendance.check_out %}
             {% include "icons/check.html" with px=18 %}
-            <!--  Here-->
-            <!-- {% include "icons/fingerprint.html" with px=18 %} -->
-            
+            {% else %}
+            {% include "icons/fingerprint.html" with px=18 %}
+            {% endif %}
             <span id="attendance_action_label"> 
-              <!-- Backend add condition to display appropriate label -->
-              Day complete
-              <!-- Here  -->
+              {% if today_attendance.check_out %}
+              Day complete 
+              {% elif today_attendance %}
               Check out
-              <!-- Here -->
+              {% else %}
               Check in
+              {% endif %} 
             </span>
           </button>
           <p class="small fg-2 mb-0 text-center" id="attendance_hint" aria-live="polite">
-            <!-- Backend add condition to display appropriate hint text or message -->
-            Today's attendance is complete.
-            <!-- Here -->
-            Uses your device fingerprint.
+           {% if today_attendance.check_out %}
+           Today's attendance is complete.
+           {% else %}
+           Uses your device fingerprint.
+           {% endif %}
           </p>
           <div class="alert py-3 px-4 small mb-0 d-none" id="attendance_error" role="status" aria-live="polite"></div>
+          {% else %}
           <a href="{% url 'settings' %}" class="btn btn-outline theme-primary d-inline-flex align-items-center justify-content-center gap-2"> {% include "icons/fingerprint.html" with px=18 %} Add a fingerprint </a>
           <p class="small fg-2 mb-0 text-center">
-            <!-- Backend add condition to display appropriate text if the employee clocked in but not out -->
+            {% if today_attendance and not today_attendance.check_out %}
             Enroll a fingerprint to check out.
-            <!-- Here -->
+            {% else %}
             Enroll once, then clock in from here.
+            {% endif %}
            </p>
           
         </div>
@@ -128,8 +144,11 @@
             <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0"> {% include "icons/calendar-check.html" with px=16 %} </span>
             <p class="small fg-2 mb-0">Attendance today</p>
           </div>
-          <!-- Backend add condition to display appropriate value 1 for today attendance & 0 for not -->
-          <p class="h3 mb-1">1</p>
+          <p class="h3 mb-1">{% if today_attendance %}
+            1
+            {% else %}
+            0
+            {% endif %}</p>
           <p class="small fg-2 mb-0">One record per workday.</p>
         </div>
       </div>
@@ -141,8 +160,8 @@
             <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0"> {% include "icons/fingerprint.html" with px=16 %} </span>
             <p class="small fg-2 mb-0">Your fingerprints</p>
           </div>
-          <!-- backend add number of passkeys   -->
-          <p class="h3 mb-1">number of passkeys</p>
+          <!-- add number of passkeys   -->
+          <p class="h3 mb-1">{{ passkey_count }}</p>
           <p class="small fg-2 mb-0">Manage them in Settings.</p>
         </div>
       </div>
@@ -154,8 +173,8 @@
             <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0"> {% include "icons/clock.html" with px=16 %} </span>
             <p class="small fg-2 mb-0">Open clock-ins</p>
           </div>
-          <!-- backend add number of open clock-ins -->
-          <p class="h3 mb-1">number of check in but not check out</p>
+          <!--  number of open clock-ins -->
+          <p class="h3 mb-1">{{ open_attendance }}</p>
           <p class="small fg-2 mb-0">Updated by your fingerprint scans.</p>
         </div>
       </div>
@@ -174,8 +193,8 @@
           </h2>
           <p class="small fg-2 mb-0">Your clock-in and clock-out records.</p>
         </div>
-        <!-- Backend add the number of attendance records -->
-        <span class="small fg-2"> number of exisit records </span>
+        <!-- number of attendance records -->
+        <span class="small fg-2"> {{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }} </span>
       </div>
 
       <div class="table-responsive">
@@ -190,59 +209,77 @@
             </tr>
           </thead>
           <tbody>
-            <!-- Backend loop on records -->
+            {% for record in page_obj %}
             <tr>
-              <td class="text-nowrap">record date</td>
-              <td class="text-nowrap">check in time</td>
+              <td class="text-nowrap">{{ record.work_date|date:"D, M j, Y" }}</td>
+              <td class="text-nowrap">{{ record.check_in|date:"g:i A" }}</td>
               <td class="text-nowrap"> 
-                <!-- Backend add logic to display check-out time -->
-                <span class="fg-2">
+                {% if record.check_out %}
+                {{ record.check_out|date:"g:i A" }}
+                {% else %}
+                <span class="fg-2">—</span>
+                {% endif %}
                 </td>
               <td class="text-nowrap">
-                <!-- Backend add logic to display work duration -->
-                 work duration 
-                <span class="badge badge-subtle rounded-pill theme-primary">In progress</span></td>
+                {% if record.check_out %}
+                {{ record.duration_display }}
+                {% else %}
+                <span class="badge badge-subtle rounded-pill theme-primary">
+                  In progress</span>
+                {% endif %}</td>
               <td class="text-nowrap small fg-2">
-                <!-- Backend add logic to display source -->
-                Source
+               {{ record.get_method_display }}
+               {% if record.passkey %} · {{ record.passkey.label }}
+               {% endif %}
               </td>
             </tr>
+            {% empty %}
             <tr>
               <td colspan="5" class="text-center py-5">
                 <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mb-2"> {% include "icons/calendar-x.html" with px=20 %} </span>
                 <p class="mb-1 fw-medium">No attendance yet</p>
                 <p class="small fg-2 mb-0">
-                  <!-- Backend add logic to display message if the employee have a passkey -->
+                  {% if passkey_count %}
                   Use the time clock above to clock in.
-                  <!-- Add a fingerprint to start clocking in. -->
+                  {% else %}
+                  Add a fingerprint to start clocking in.
+                  {% endif %}
                 </p>
               </td>
             </tr>
+            {% endfor %}
           </tbody>
         </table>
       </div>
 
-      <!-- Backend logic for pagination to check the number of pages  -->
+      {% if page_obj.paginator.num_pages > 1 %}
       <nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" aria-label="Attendance pages">
-        <!-- Backend logic to display current page and total pages -->
-        <span class="small fg-2">Page # of total</span>
+        <!--  logic to display current page and total pages -->
+        <span class="small fg-2">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         <ul class="pagination mb-0">
-          <!-- Backend logic to disable link if there is no previous page -->
-          <li class="page-item disabled">
-            <!-- Backend logic to display previous page link if there is a prev. page -->
-            <a class="page-link d-inline-flex align-items-center gap-1" href="">{% include "icons/chevron-left.html" with px=14 %}Previous</a>
-            <!-- Backend logic to display text if there is no a prev. page -->
+          <!--  logic to disable link if there is no previous page -->
+           
+          <li class="page-item {% if not page_obj.has_previous %} disabled{% endif %}">
+            {% if page_obj.has_previous %}
+            <!--  logic to display previous page link if there is a prev. page -->
+            <a class="page-link d-inline-flex align-items-center gap-1" href="?page={{ page_obj.previous_page_number }}">{% include "icons/chevron-left.html" with px=14 %}Previous</a>
+             {% else %}
+            <!--  logic to display text if there is no a prev. page -->
             <span class="page-link d-inline-flex align-items-center gap-1">{% include "icons/chevron-left.html" with px=14 %}Previous</span>
+            {% endif %}
           </li>
-          <li class="page-item disabled">
-            <!-- Backend logic to display next page link if there is a next page -->
-            <a class="page-link d-inline-flex align-items-center gap-1" href="">Next{% include "icons/chevron-right.html" with px=14 %}</a>
-            <!-- Backend logic to display text if there is no next page -->
+          <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+            <!--  logic to display next page link if there is a next page -->
+            {% if page_obj.has_next %}
+            <a class="page-link d-inline-flex align-items-center gap-1" href="?page={{ page_obj.next_page_number }}">Next{% include "icons/chevron-right.html" with px=14 %}</a>
+            {% else %}
+            <!--  logic to display text if there is no next page -->
             <span class="page-link d-inline-flex align-items-center gap-1">Next{% include "icons/chevron-right.html" with px=14 %}</span>
-            
+            {% endif %}
           </li>
         </ul>
       </nav>
+      {% endif %}
     </div>
   </div>
 </div>
