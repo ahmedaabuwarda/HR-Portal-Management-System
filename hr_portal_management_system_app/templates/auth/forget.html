@@ -1,0 +1,32 @@
+{% extends 'layout.html' %} {%block title%}Forget my Password{%endblock%} {% block content %}
+<div class="container py-5 my-auto">
+  <div class="row justify-content-center">
+    <div class="col-12 sm:col-8 md:col-6 lg:col-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- fingerprint logo -->
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mx-auto mb-3" aria-hidden="true">
+            {% include "icons/fingerprint.html" with px=20 %}
+          </span>
+          <h1 class="h4 text-center mb-1">Welcome back</h1>
+          <p class="text-center fg-2 mb-4">Enter your email address and we'll send you a verification code.</p>
+          <!-- Backend Add action -->
+          <form action="verification" method="POST" novalidate>
+            {% csrf_token %}
+            <div class="mb-4">
+              <label for="id_email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="id_email" name="email" autocomplete="email" required />
+            </div>
+            </div>
+            <div class="d-flex gap-2">
+             <button type="submit" class="btn btn-solid theme-primary flex-grow-1 mx-3 mb-3 d-inline-flex align-items-center justify-content-center gap-2">
+                {% include "icons/log-in.html" with px=18 %} Send code
+                </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

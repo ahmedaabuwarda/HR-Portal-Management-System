@@ -15,5 +15,8 @@ urlpatterns = [
     path('settings', views.settings, name='settings'),
     path("user/passkeys/register/begin", views.passkey_register_begin, name="user.passkey_register_begin"),
     path("user/passkeys/register/complete", views.passkey_register_complete, name="user.passkey_register_complete"),
+    path('forget_password', views.forget_password, name='forget_password'),
+    path('verification', views.verification, name='verification'),
+    path('reset_password', views.reset_password, name='reset_password'),
 
 ]
