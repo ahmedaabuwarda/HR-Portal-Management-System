@@ -174,4 +174,87 @@ def dashboard(request):
 
 
 def settings(request):
-    return render(request, 'user/settings.html')
+    user = current_user(request)
+    if user is None:
+        messages.error(request, "You must log in first!")
+        return redirect('user.login')
+        # POST: update the profile or the password.
+    if request.method == 'POST':
+
+        action = request.POST.get('action')
+
+        if action == 'profile':
+            errors = User.objects.profile_validator(request.POST, user.id)
+
+            if errors:
+                for key, val in errors.items():
+                    messages.error(request, val)
+
+                return redirect('user.settings')
+
+            user.first_name = request.POST['first_name'].strip()
+            user.last_name = request.POST['last_name'].strip()
+            user.email = normalize_email(request.POST.get('email'))
+            user.save()
+
+            request.session['user_first_name'] = user.first_name
+            messages.success(request, "Profile updated successfully!")
+
+        elif action == 'password':
+            errors = User.objects.password_change_validator(request.POST, user)
+
+            if errors:
+                for key, val in errors.items():
+                    messages.error(request, val)
+
+                return redirect('settings')
+
+            user.password = bcrypt.hashpw(
+                request.POST['new_password'].encode(),
+                bcrypt.gensalt()
+            ).decode()
+            user.save()
+
+            revoke_other_sessions(user, request.session.session_key)
+
+            messages.success(request, "Password updated successfully!")
+
+        else:
+            messages.error(request, "Unknown settings action.")
+
+        return redirect('settings')
+
+    # GET: show the account.
+    context = {
+        'account': user,
+        # 'passkeys': user.passkeys.all(),
+    }
+    return render(request, 'user/settings.html', context)
+
+def passkey_register_begin(request):
+    pass
+
+
+def passkey_register_complete(request):
+    pass
+
+
+# This method check if the user currently logged in , and return user object
+def current_user(request):
+    # get user id from current session
+    user_id = request.session.get('user_id')
+    # if no user id in session, return None
+    if not user_id:
+        return None
+    # else, find the user and return user information
+    return User.objects.filter(id=user_id).first()
+
+def revoke_other_sessions(user, current_key):
+    for session in Session.objects.filter(expire_date__gte=timezone.now()):
+        try:
+            data = session.get_decoded()
+        except Exception:
+            continue
+
+        if data.get('user_id') == user.id and session.session_key != current_key:
+            session.delete()
