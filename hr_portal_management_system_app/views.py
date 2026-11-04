@@ -4,13 +4,14 @@ import bcrypt
 
 from django.contrib import messages
 from django.contrib.sessions.models import Session
+from django.db import IntegrityError
 from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
-from .models import User, normalize_email
+from .models import Passkey, User, normalize_email
 
 # WebAuthn imports
-from webauthn import generate_registration_options, options_to_json
+from webauthn import generate_registration_options, options_to_json, verify_registration_response
 
 from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria,
@@ -24,6 +25,8 @@ from webauthn.helpers.structs import (
 # A real bcrypt hash, used to time-check an unknown email so a login attempt
 # takes about the same time whether the account exists or not.
 DUMMY_PASSWORD_HASH = '$2b$12$HZAl9cTJ9PPgPlcA/H18he6oB5WzVtIAVwXseSS7Zz3MwfTfkF6/y'
+ALLOWED_TRANSPORTS = frozenset({'usb', 'nfc', 'ble', 'internal', 'hybrid', 'smart-card'})
+
 
 
 # ---------- Helper functions ----------
@@ -74,6 +77,21 @@ def encode_b64url(value):
 def json_options(options):
     """Serialize WebAuthn options into a JSON response."""
     return JsonResponse(json.loads(options_to_json(options)))
+
+
+def clean_transports(value):
+    """Keep only WebAuthn-recognized transport values."""
+    if not isinstance(value, list):
+        return []
+
+    return sorted({item for item in value if isinstance(item, str) and item in ALLOWED_TRANSPORTS})
+
+
+def decode_b64url(value):
+    """Decode a base64url value into bytes."""
+    # base64url strips the '=' padding; add it back for the decoder.
+    return base64.urlsafe_b64decode(value + '=' * (-len(value) % 4))
+
 
 # ---------- Public pages ----------
 
@@ -279,7 +297,7 @@ def settings(request):
     # GET: show the account.
     context = {
         'account': user,
-        # 'passkeys': user.passkeys.all(),
+        'passkeys': user.passkeys.all(),
     }
     return render(request, 'user/settings.html', context)
 
@@ -327,7 +345,84 @@ def passkey_register_begin(request):
     return json_options(options)
 
 
-
 def passkey_register_complete(request):
-    pass
+    """Verify and persist a newly enrolled passkey."""
+    # Only POST is allowed: this endpoint is called by JavaScript.
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
 
+    # Guard: JavaScript calls this endpoint, so answer with JSON 403, not a redirect.
+    user = current_user(request)
+
+    if user is None:
+        return JsonResponse({'error': 'Not authenticated.'}, status=403)
+
+    # The challenge is single use: drop it before verifying.
+    challenge = request.session.pop('passkey_challenge', None)
+
+    if not challenge:
+        return JsonResponse({'error': 'Registration session expired.'}, status=400)
+
+    # Read the JSON body the browser posted.
+    try:
+        payload = json.loads(request.body or '{}')
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Invalid request body.'}, status=400)
+
+    rp_id, origin = relying_party(request)
+
+    # A label is optional: default it, trim it, cap it at 100 characters.
+    label = str(payload.get('label') or 'Fingerprint').strip()[:100]
+
+    if not label:
+        label = 'Fingerprint'
+
+    try:
+        verified = verify_registration_response(
+            credential=payload['credential'],
+            expected_challenge=decode_b64url(challenge),
+            expected_rp_id=rp_id,
+            expected_origin=origin,
+            require_user_verification=True,
+        )
+    except Exception:
+        return JsonResponse({'error': 'Fingerprint registration failed.'}, status=400)
+
+    try:
+        Passkey.objects.create(
+            user=user,
+            label=label,
+            credential_id=verified.credential_id,
+            public_key=verified.credential_public_key,
+            sign_count=verified.sign_count,
+            transports=clean_transports(payload.get('transports')),
+        )
+    except IntegrityError:
+        return JsonResponse({'error': 'This fingerprint is already registered.'}, status=400)
+
+    return JsonResponse({'ok': True, 'label': label})
+
+
+def passkey_delete(request, passkey_id):
+    """Delete one of the signed-in user's passkeys."""
+    # Only POST is allowed: this endpoint is a form submitted by JavaScript-free HTML.
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    # Guard: must be signed in.
+    user = current_user(request)
+
+    if user is None:
+        messages.error(request, "You must log in first!")
+        return redirect('login')
+
+    passkey = user.passkeys.filter(id=passkey_id).first()
+
+    if not passkey:
+        messages.error(request, "Fingerprint not found.")
+        return redirect('settings')
+
+    passkey.delete()
+    messages.success(request, "Fingerprint removed.")
+
+    return redirect('settings')

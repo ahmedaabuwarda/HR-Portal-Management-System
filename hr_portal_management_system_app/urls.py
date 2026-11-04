@@ -15,5 +15,6 @@ urlpatterns = [
     path('settings', views.settings, name='settings'),
     path("user/passkeys/register/begin", views.passkey_register_begin, name="passkey_register_begin"),
     path("user/passkeys/register/complete", views.passkey_register_complete, name="passkey_register_complete"),
+    path("user/passkeys/<int:passkey_id>/delete", views.passkey_delete, name="passkey_delete"),
 
 ]
