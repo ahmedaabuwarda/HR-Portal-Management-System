@@ -1,10 +1,23 @@
+import base64
+import json
 import bcrypt
 
 from django.contrib import messages
-from django.http import HttpResponseNotAllowed
+from django.contrib.sessions.models import Session
+from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from .models import User, normalize_email
+
+# WebAuthn imports
+from webauthn import generate_registration_options, options_to_json
+
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    PublicKeyCredentialDescriptor,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+)
 
 # Create your views here.
 
@@ -22,6 +35,7 @@ def begin_session(request, user):
     request.session['user_id'] = user.id
     request.session['user_first_name'] = user.first_name
 
+
 # This method check if the user currently logged in , and return user object
 def current_user(request):
     # get user id from current session
@@ -32,6 +46,7 @@ def current_user(request):
     # else, find the user and return user information
     return User.objects.filter(id=user_id).first()
 
+
 def revoke_other_sessions(user, current_key):
     for session in Session.objects.filter(expire_date__gte=timezone.now()):
         try:
@@ -41,6 +56,24 @@ def revoke_other_sessions(user, current_key):
 
         if data.get('user_id') == user.id and session.session_key != current_key:
             session.delete()
+
+
+def relying_party(request):
+    """Return the WebAuthn relying-party id and origin for this request."""
+    host = request.get_host().split(':')[0]
+    origin = f"{request.scheme}://{request.get_host()}"
+
+    return host, origin
+
+
+def encode_b64url(value):
+    """Encode bytes as unpadded base64url."""
+    return base64.urlsafe_b64encode(value).decode()
+
+
+def json_options(options):
+    """Serialize WebAuthn options into a JSON response."""
+    return JsonResponse(json.loads(options_to_json(options)))
 
 # ---------- Public pages ----------
 
@@ -250,11 +283,51 @@ def settings(request):
     }
     return render(request, 'user/settings.html', context)
 
+
+# ---------- Fingerprint enrollment ----------
+
+
 def passkey_register_begin(request):
-    pass
+    """Return WebAuthn registration options and store the challenge."""
+    # Only POST is allowed: this endpoint is called by JavaScript.
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    # Guard: JavaScript calls this endpoint, so answer with JSON 403, not a redirect.
+    user = current_user(request)
+
+    if user is None:
+        return JsonResponse({'error': 'Not authenticated.'}, status=403)
+
+    rp_id, _ = relying_party(request)
+
+    # Tell the authenticator which fingerprints are already enrolled.
+    excluded = [
+        PublicKeyCredentialDescriptor(
+            id=base64.urlsafe_b64decode(passkey.credential_id)
+        )
+        for passkey in user.passkeys.all()
+    ]
+
+    options = generate_registration_options(
+        rp_id=rp_id,
+        rp_name='HR Portal',
+        user_id=str(user.id).encode(),
+        user_name=user.email,
+        user_display_name=f"{user.first_name} {user.last_name}",
+        exclude_credentials=excluded,
+        authenticator_selection=AuthenticatorSelectionCriteria(
+            resident_key=ResidentKeyRequirement.REQUIRED,
+            user_verification=UserVerificationRequirement.REQUIRED,
+        ),
+    )
+
+    request.session['passkey_challenge'] = encode_b64url(options.challenge)
+
+    return json_options(options)
+
 
 
 def passkey_register_complete(request):
     pass
-
 
