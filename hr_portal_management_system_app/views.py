@@ -3,7 +3,7 @@ import bcrypt
 from django.contrib import messages
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, redirect
-
+from django.utils import timezone
 from .models import User, normalize_email
 
 # Create your views here.
@@ -22,6 +22,25 @@ def begin_session(request, user):
     request.session['user_id'] = user.id
     request.session['user_first_name'] = user.first_name
 
+# This method check if the user currently logged in , and return user object
+def current_user(request):
+    # get user id from current session
+    user_id = request.session.get('user_id')
+    # if no user id in session, return None
+    if not user_id:
+        return None
+    # else, find the user and return user information
+    return User.objects.filter(id=user_id).first()
+
+def revoke_other_sessions(user, current_key):
+    for session in Session.objects.filter(expire_date__gte=timezone.now()):
+        try:
+            data = session.get_decoded()
+        except Exception:
+            continue
+
+        if data.get('user_id') == user.id and session.session_key != current_key:
+            session.delete()
 
 # ---------- Public pages ----------
 
@@ -145,6 +164,31 @@ def logout(request):
 
 
 def dashboard(request):
+    if "user_id" not in request.session:
+        messages.error(request, "You must log in first!")
+        return redirect('home')
+    
+    user_id = request.session['user_id']
+    today = timezone.localdate()
+
+    # history = Attendance.objects.filter(
+    #     user_id=user_id,
+    # ).select_related('passkey')
+
+    # context = {
+    #     'passkey_count': Passkey.objects.filter(user_id=user_id).count(),
+    #     'page_obj': Paginator(history, 20).get_page(request.GET.get('page')),
+        # 'open_attendance': Attendance.objects.filter(
+        #     user_id=user_id,
+        #     work_date=today,
+        #     check_out__isnull=True,
+        # ).count(),
+        # 'today_attendance': Attendance.objects.filter(
+        #     user_id=user_id,
+        #     work_date=today,
+        # ).first(),
+    # }
+
     return render(request, 'user/dashboard.html')
 
 
@@ -152,7 +196,7 @@ def settings(request):
     user = current_user(request)
     if user is None:
         messages.error(request, "You must log in first!")
-        return redirect('user.login')
+        return redirect('login')
         # POST: update the profile or the password.
     if request.method == 'POST':
 
@@ -165,7 +209,7 @@ def settings(request):
                 for key, val in errors.items():
                     messages.error(request, val)
 
-                return redirect('user.settings')
+                return redirect('settings')
 
             user.first_name = request.POST['first_name'].strip()
             user.last_name = request.POST['last_name'].strip()
@@ -214,22 +258,3 @@ def passkey_register_complete(request):
     pass
 
 
-# This method check if the user currently logged in , and return user object
-def current_user(request):
-    # get user id from current session
-    user_id = request.session.get('user_id')
-    # if no user id in session, return None
-    if not user_id:
-        return None
-    # else, find the user and return user information
-    return User.objects.filter(id=user_id).first()
-
-def revoke_other_sessions(user, current_key):
-    for session in Session.objects.filter(expire_date__gte=timezone.now()):
-        try:
-            data = session.get_decoded()
-        except Exception:
-            continue
-
-        if data.get('user_id') == user.id and session.session_key != current_key:
-            session.delete()
