@@ -162,6 +162,31 @@ def logout(request):
     messages.error(request, "You logged out!")
     return redirect('home')
 
+def forget_password(request):
+    return render(request, 'auth/forget.html')
+
+def verification(request):
+    if request.method == 'POST':
+        email = normalize_email(request.POST.get('email'))
+        user = User.objects.filter(email=email).first()
+
+        if user is None:
+            messages.error(request, "Invalid email address")
+            return redirect('forget_password')
+
+    return render(request, 'auth/verification.html')
+
+def reset_password(request):
+    # if request.method == 'POST':
+    #     email = normalize_email(request.POST.get('email'))
+    #     user = User.objects.filter(email=email).first()
+
+    #     if user is None:
+    #         messages.error(request, "Invalid email address")
+    #         return redirect('forget_password')
+
+    return render(request, 'auth/reset.html')
+
 
 def dashboard(request):
     if "user_id" not in request.session:
