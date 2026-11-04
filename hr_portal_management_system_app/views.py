@@ -152,7 +152,7 @@ def settings(request):
     user = current_user(request)
     if user is None:
         messages.error(request, "You must log in first!")
-        return redirect('user.login')
+        return redirect('login')
         # POST: update the profile or the password.
     if request.method == 'POST':
 
@@ -165,7 +165,7 @@ def settings(request):
                 for key, val in errors.items():
                     messages.error(request, val)
 
-                return redirect('user.settings')
+                return redirect('settings')
 
             user.first_name = request.POST['first_name'].strip()
             user.last_name = request.POST['last_name'].strip()
