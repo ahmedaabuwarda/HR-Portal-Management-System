@@ -3,7 +3,7 @@ import bcrypt
 from django.contrib import messages
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, redirect
-
+from django.utils import timezone
 from .models import User, normalize_email
 
 # Create your views here.
