@@ -3,7 +3,7 @@ import bcrypt
 from django.contrib import messages
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, redirect
-
+from django.utils import timezone
 from .models import User, normalize_email
 
 # Create your views here.
@@ -164,6 +164,31 @@ def logout(request):
 
 
 def dashboard(request):
+    if "user_id" not in request.session:
+        messages.error(request, "You must log in first!")
+        return redirect('home')
+    
+    user_id = request.session['user_id']
+    today = timezone.localdate()
+
+    # history = Attendance.objects.filter(
+    #     user_id=user_id,
+    # ).select_related('passkey')
+
+    # context = {
+    #     'passkey_count': Passkey.objects.filter(user_id=user_id).count(),
+    #     'page_obj': Paginator(history, 20).get_page(request.GET.get('page')),
+        # 'open_attendance': Attendance.objects.filter(
+        #     user_id=user_id,
+        #     work_date=today,
+        #     check_out__isnull=True,
+        # ).count(),
+        # 'today_attendance': Attendance.objects.filter(
+        #     user_id=user_id,
+        #     work_date=today,
+        # ).first(),
+    # }
+
     return render(request, 'user/dashboard.html')
 
 
