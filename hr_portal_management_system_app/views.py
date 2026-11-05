@@ -1,14 +1,19 @@
 import base64
 import json
+import random
 import bcrypt
 
+from datetime import timedelta
+
+from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.sessions.models import Session
+from django.core.mail import EmailMultiAlternatives
 from django.db import IntegrityError
 from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
-from .models import Passkey, User, normalize_email
+from .models import Passkey, PasswordResetToken, User, normalize_email
 
 # WebAuthn imports
 from webauthn import generate_registration_options, options_to_json, verify_registration_response
@@ -213,31 +218,148 @@ def logout(request):
     messages.error(request, "You logged out!")
     return redirect('home')
 
+
+# ------------- Password reset flow -------------
+
 def forget_password(request):
-    return render(request, 'auth/forget.html')
+    """Show the form, or email a 6-digit reset code to the given address."""
+
+    # GET: show the form.
+    if request.method == 'GET':
+        return render(request, 'auth/forget.html')
+
+    # POST: find the user and send them a code.
+    email = normalize_email(request.POST.get('email'))
+    user = User.objects.filter(email=email).first()
+
+    # Always answer the same way so nobody can tell which emails are registered.
+    done_message = "If that email exists, a code has been sent."
+
+    if user is None:
+        messages.error(request, done_message)
+        return redirect('forget_password')
+
+    # Make a 6-digit code and save it. Old codes stop working.
+    code = str(random.randint(100000, 999999))
+    PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+    PasswordResetToken.objects.create(user=user, code=code)
+
+    # Remember which email the code was sent to, so the next page knows.
+    request.session['reset_email'] = user.email
+
+    subject = "Your HR Portal password reset code"
+    text_content = (
+        f"Your verification code is: {code}\n\n"
+        "It is valid for 10 minutes.\n\n"
+        "If you are having any issues with your account, please don't hesitate to contact us by replying to this mail.\n\n"
+        "Thank you,\nHR Portal team"
+    )
+    html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937;">
+            <p>Hello,</p>
+            <p>Your verification code is: <strong>{code}</strong></p>
+            <p>It is valid for 10 minutes.</p>
+            <p>If you are having any issues with your account, please don't hesitate to contact us by replying to this mail.</p>
+            <p>Thank you,<br>HR Portal team</p>
+        </body>
+        </html>
+    """
+
+    email = EmailMultiAlternatives(
+        subject,
+        text_content,
+        django_settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+    )
+    email.attach_alternative(html_content, "text/html")
+    email.send(fail_silently=False)
+
+    messages.success(request, done_message)
+    return redirect('verification')
+
 
 def verification(request):
-    if request.method == 'POST':
-        email = normalize_email(request.POST.get('email'))
-        user = User.objects.filter(email=email).first()
+    """Check the code the user typed, then let them set a new password."""
 
-        if user is None:
-            messages.error(request, "Invalid email address")
-            return redirect('forget_password')
+    # Guard: someone must have asked for a code first.
+    if 'reset_email' not in request.session:
+        messages.error(request, "Please request a reset code first.")
+        return redirect('forget_password')
 
-    return render(request, 'auth/verification.html')
+    # GET: show the code form.
+    if request.method == 'GET':
+        return render(request, 'auth/verification.html')
+
+    # POST: check the code.
+    code = (request.POST.get('verification_code') or '').strip()
+    user = User.objects.filter(email=request.session['reset_email']).first()
+
+    token = None
+    if user is not None and code:
+        token = PasswordResetToken.objects.filter(
+            user=user,
+            code=code,
+            used=False,
+            created_at__gte=timezone.now() - timedelta(minutes=10),
+        ).first()
+
+    if token is None:
+        messages.error(request, "Invalid or expired verification code.")
+        return redirect('verification')
+
+    # Mark the code as used so it cannot be reused.
+    token.used = True
+    token.save()
+
+    messages.success(request, "Verification successful!")
+    request.session['reset_user_id'] = user.id
+
+    return redirect('reset_password')
+
 
 def reset_password(request):
-    # if request.method == 'POST':
-    #     email = normalize_email(request.POST.get('email'))
-    #     user = User.objects.filter(email=email).first()
+    """Save the new password once the code has been verified."""
 
-    #     if user is None:
-    #         messages.error(request, "Invalid email address")
-    #         return redirect('forget_password')
+    # Guard: the code must have been verified in this session.
+    user_id = request.session.get('reset_user_id')
+    user = User.objects.filter(id=user_id).first() if user_id else None
 
-    return render(request, 'auth/reset.html')
+    if user is None:
+        messages.error(request, "Please request a reset code first.")
+        return redirect('forget_password')
 
+    # GET: show the form.
+    if request.method == 'GET':
+        return render(request, 'auth/reset.html')
+
+    # POST: validate and save the new password.
+    password = request.POST.get('password') or ''
+    confirm_password = request.POST.get('confirm_password') or ''
+
+    if len(password) < 8:
+        messages.error(request, "Password must be at least 8 characters!")
+        return redirect('reset_password')
+
+    if password != confirm_password:
+        messages.error(request, "Password and confirm password must match!")
+        return redirect('reset_password')
+
+    user.password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    user.save()
+
+    # The reset is finished: forget the email and the verified user.
+    request.session.pop('reset_email', None)
+    request.session.pop('reset_user_id', None)
+
+    # Sign out every other device.
+    revoke_other_sessions(user, request.session.session_key)
+
+    messages.success(request, "Password reset successfully! Please log in.")
+    return redirect('login')
+
+
+# ---------- user dashboard and settings ----------
 
 def dashboard(request):
     if "user_id" not in request.session:

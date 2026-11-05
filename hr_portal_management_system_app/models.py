@@ -163,6 +163,20 @@ class User(models.Model):
     objects = UserManager()
 
 
+class PasswordResetToken(models.Model):
+    """A one-time code sent by email so a user can reset a forgotten password."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reset_tokens')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+
+    def __str__(self):
+        """Return a readable token label."""
+
+        return f"{self.user.email} - {self.code}"
+
+
 class Passkey(models.Model):
     """WebAuthn credential metadata; biometric data never leaves the device."""
 

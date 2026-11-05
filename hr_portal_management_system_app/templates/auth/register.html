@@ -5,9 +5,7 @@
       <div class="card shadow-sm">
         <div class="card-body">
           <!-- fingerprint logo -->
-          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mx-auto mb-3" aria-hidden="true">
-            {% include "icons/fingerprint.html" with px=20 %}
-          </span>
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mx-auto mb-3" aria-hidden="true"> {% include "icons/fingerprint.html" with px=20 %} </span>
           <h1 class="h4 text-center mb-1">Create an account</h1>
           <p class="text-center fg-2 mb-4">Join your HR workspace</p>
           <form method="post" action="{% url 'register' %}" novalidate>
