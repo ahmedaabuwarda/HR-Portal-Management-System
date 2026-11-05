@@ -4,11 +4,22 @@ import re
 from datetime import timedelta
 
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from .models import PasswordResetToken, User
+
+
+class NotFoundPageTests(TestCase):
+
+    @override_settings(DEBUG=True)
+    def test_unknown_url_renders_custom_not_found_page(self):
+        response = self.client.get('/this-page-does-not-exist/')
+
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, 'Page not found', status_code=404)
+        self.assertContains(response, 'Back to home', status_code=404)
 
 
 def make_user(email='sara@example.com'):
