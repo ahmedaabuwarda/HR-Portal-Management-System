@@ -27,3 +27,6 @@ media/
 .idea/
 .vscode/
 .DS_Store
+
+# Secrets (Gmail app password etc.)
+.env

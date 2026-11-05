@@ -5,9 +5,7 @@
       <div class="card shadow-sm">
         <div class="card-body">
           <!-- fingerprint logo -->
-          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mx-auto mb-3" aria-hidden="true">
-            {% include "icons/fingerprint.html" with px=20 %}
-          </span>
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mx-auto mb-3" aria-hidden="true"> {% include "icons/fingerprint.html" with px=20 %} </span>
           <h1 class="h4 text-center mb-1">Welcome back</h1>
           <p class="text-center fg-2 mb-4">Log in to your HR workspace</p>
           <form action="{% url 'login' %}" method="POST" novalidate>
@@ -33,12 +31,8 @@
               </button>
             </div>
           </form>
-          <p class="mt-4 mb-0 text-center small fg-2">
-            New here? <a class="d-inline-flex align-items-center gap-1" href="{% url 'register' %}"> {% include 'icons/user-plus.html' with px=14 %}Create an account</a>
-          </p>
-          <p class="mt-4 mb-0 text-center small fg-2">
-            Forget your password? <a class="d-inline-flex align-items-center gap-1" href="{% url 'forget_password' %}">Reset it</a>
-          </p>
+          <p class="mt-4 mb-0 text-center small fg-2">New here? <a class="d-inline-flex align-items-center gap-1" href="{% url 'register' %}"> {% include 'icons/user-plus.html' with px=14 %}Create an account</a></p>
+          <p class="mt-4 mb-0 text-center small fg-2"><a class="d-inline-flex align-items-center gap-1" href="{% url 'forget_password' %}">Forget your password?</a></p>
         </div>
       </div>
     </div>

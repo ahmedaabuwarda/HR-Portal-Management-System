@@ -5,22 +5,28 @@
       <div class="card shadow-sm">
         <div class="card-body">
           <!-- fingerprint logo -->
-          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mx-auto mb-3" aria-hidden="true">
-            {% include "icons/fingerprint.html" with px=20 %}
-          </span>
+          <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mx-auto mb-3" aria-hidden="true"> {% include "icons/fingerprint.html" with px=20 %} </span>
           <h1 class="h4 text-center mb-1">Welcome back</h1>
           <p class="text-center fg-2 mb-4">Enter the verification code sent to your email.</p>
           <!-- Backend Add action -->
-          <form action="{% url 'reset_password' %}" method="POST" novalidate>
+          <form action="{% url 'verification' %}" method="POST" novalidate>
             {% csrf_token %}
             <div class="mb-4">
               <label for="id_email" class="form-label">Verification Code</label>
-              <input type="text" class="form-control text-center" id="id_verification_code" name="verification_code"
-                    placeholder="Enter your 6-digit code" maxlength="6" minlength="6"  inputmode="numeric" autocomplete="one-time-code" required  />  
+              <input
+                type="text"
+                class="form-control text-center"
+                id="id_verification_code"
+                name="verification_code"
+                placeholder="Enter your 6-digit code"
+                maxlength="6"
+                minlength="6"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                required
+              />
             </div>
-            <div class="mb-5">
-              
-            </div>
+            <div class="mb-5"></div>
             <div class="d-flex gap-2">
               <button type="submit" class="btn btn-solid theme-primary flex-grow-1 d-inline-flex align-items-center justify-content-center gap-2">{% include "icons/log-in.html" with px=18 %} Verify Email</button>
             </div>
