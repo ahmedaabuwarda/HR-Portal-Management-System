@@ -115,8 +115,8 @@ def contact_us(request):
     return render(request, 'contact_us.html')
 
 
-def handler404(request, exception):
-    """Render the branded not-found page."""
+def not_found(request, unmatched):
+    """Render the branded not-found page for unmatched URLs, including in debug mode."""
     return render(request, '404.html', status=404)
 
 

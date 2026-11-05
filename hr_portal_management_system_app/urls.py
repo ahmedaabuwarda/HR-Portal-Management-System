@@ -21,4 +21,6 @@ urlpatterns = [
     path('forget_password', views.forget_password, name='forget_password'),
     path('verification', views.verification, name='verification'),
     path('reset_password', views.reset_password, name='reset_password'),
+
+    path('<path:unmatched>', views.not_found, name='not_found'),
 ]

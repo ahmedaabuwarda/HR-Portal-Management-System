@@ -13,7 +13,7 @@ from .models import PasswordResetToken, User
 
 class NotFoundPageTests(TestCase):
 
-    @override_settings(DEBUG=False)
+    @override_settings(DEBUG=True)
     def test_unknown_url_renders_custom_not_found_page(self):
         response = self.client.get('/this-page-does-not-exist/')
 

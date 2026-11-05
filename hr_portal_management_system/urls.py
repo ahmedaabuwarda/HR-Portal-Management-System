@@ -17,7 +17,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-handler404 = 'hr_portal_management_system_app.views.handler404'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
