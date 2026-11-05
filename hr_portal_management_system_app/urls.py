@@ -13,8 +13,12 @@ urlpatterns = [
 
     path('dashboard', views.dashboard, name='dashboard'),
     path('settings', views.settings, name='settings'),
+  
     path("user/passkeys/register/begin", views.passkey_register_begin, name="passkey_register_begin"),
     path("user/passkeys/register/complete", views.passkey_register_complete, name="passkey_register_complete"),
     path("user/passkeys/<int:passkey_id>/delete", views.passkey_delete, name="passkey_delete"),
-
+  
+    path('forget_password', views.forget_password, name='forget_password'),
+    path('verification', views.verification, name='verification'),
+    path('reset_password', views.reset_password, name='reset_password'),
 ]
