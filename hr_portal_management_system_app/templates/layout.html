@@ -33,8 +33,12 @@
     <script defer type="text/javascript" src="{% static 'js/app.js' %}"></script>
     <!-- Script for showing/hiding password -->
     <script defer type="text/javascript" src="{% static 'js/show_hide_password.js' %}"></script>
+    <!-- register new fingerprint -->
+    <script defer type="text/javascript" src="{% static 'js/register_fingerprint.js' %}"></script>
     <!-- Script for handling toasts -->
     <script type="module" src="{% static 'js/toast.js' %}"></script>
+    <!-- Read by app.js when it posts to our fingerprint endpoints. -->
+    <meta name="csrf-token" content="{{ csrf_token }}" />
     <title>HR Management System | {% block title %}{% endblock %}</title>
   </head>
   <body class="bg-1 d-flex flex-column min-vh-100">

@@ -161,3 +161,26 @@ class User(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     objects = UserManager()
+
+
+class Passkey(models.Model):
+    """WebAuthn credential metadata; biometric data never leaves the device."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='passkeys')
+    label = models.CharField(max_length=100, default='Fingerprint')
+    credential_id = models.CharField(max_length=255, unique=True)
+    public_key = models.BinaryField()
+    sign_count = models.PositiveIntegerField(default=0)
+    transports = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        """Newest passkeys first."""
+
+        ordering = ['-created_at']
+
+    def __str__(self):
+        """Return a readable passkey label."""
+
+        return f"{self.user.email} - {self.label}"
