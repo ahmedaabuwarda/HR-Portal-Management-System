@@ -9,7 +9,7 @@
           <h1 class="h4 text-center mb-1">Welcome back</h1>
           <p class="text-center fg-2 mb-4">Enter the verification code sent to your email.</p>
           <!-- Backend Add action -->
-          <form action="{% url 'verification' %}" method="POST" novalidate>
+          <form action="{% url 'code_verification' %}" method="POST" novalidate>
             {% csrf_token %}
             <div class="mb-4">
               <label for="id_email" class="form-label">Verification Code</label>

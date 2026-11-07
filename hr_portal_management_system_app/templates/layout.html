@@ -29,12 +29,14 @@
     <!-- app css -->
     <link rel="stylesheet" type="text/css" href="{% static 'css/app.css' %}" />
     <!-- app js -->
-    <!-- One script for the whole site: theme, toasts and fingerprints. -->
-    <script defer type="text/javascript" src="{% static 'js/app.js' %}"></script>
+    <!-- script for the whole toggle themes. -->
+    <script defer type="text/javascript" src="{% static 'js/toggle_themes.js' %}"></script>
     <!-- Script for showing/hiding password -->
     <script defer type="text/javascript" src="{% static 'js/show_hide_password.js' %}"></script>
     <!-- register new fingerprint -->
-    <script defer type="text/javascript" src="{% static 'js/register_fingerprint.js' %}"></script>
+    <script defer type="module" src="{% static 'js/register_fingerprint.js' %}"></script>
+    <!-- login + checkin using fingerprint -->
+    <script defer type="module" src="{% static 'js/login_checkin_using_fingerprint.js' %}"></script>
     <!-- Script for handling toasts -->
     <script type="module" src="{% static 'js/toast.js' %}"></script>
     <!-- Read by app.js when it posts to our fingerprint endpoints. -->

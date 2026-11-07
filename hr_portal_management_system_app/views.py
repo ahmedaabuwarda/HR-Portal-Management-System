@@ -1,6 +1,8 @@
+import ast
 import base64
 import json
 import random
+from zoneinfo import ZoneInfo
 import bcrypt
 
 from datetime import timedelta
@@ -9,14 +11,17 @@ from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.sessions.models import Session
 from django.core.mail import EmailMultiAlternatives
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.utils import timezone
-from .models import Passkey, PasswordResetToken, User, normalize_email
+from .models import Attendance, AttendanceSettings, Holiday, Passkey, PasswordResetToken, User, normalize_email
+
+from .attendance_rules import evaluate_check_in, settings_timezone
 
 # WebAuthn imports
-from webauthn import generate_registration_options, options_to_json, verify_registration_response
+from webauthn import generate_authentication_options, generate_registration_options, options_to_json, verify_authentication_response, verify_registration_response
 
 from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria,
@@ -98,6 +103,174 @@ def decode_b64url(value):
     return base64.urlsafe_b64decode(value + '=' * (-len(value) % 4))
 
 
+def decode_stored_credential_id(value):
+    """Decode a stored credential ID, including the repr format used previously."""
+    if value.startswith(("b'", 'b"')):
+        credential_id = ast.literal_eval(value)
+
+        if isinstance(credential_id, bytes):
+            return credential_id
+
+        raise ValueError('Stored credential ID is not bytes.')
+
+    return decode_b64url(value)
+
+
+def passkey_authentication_options(request, passkeys):
+    """Build WebAuthn authentication options for the given passkeys."""
+
+    rp_id, _ = relying_party(request)
+
+    return generate_authentication_options(
+        rp_id=rp_id,
+        allow_credentials=[
+            PublicKeyCredentialDescriptor(
+                id=decode_stored_credential_id(passkey.credential_id)
+            )
+            for passkey in passkeys
+        ],
+        user_verification=UserVerificationRequirement.REQUIRED,
+    )
+
+
+def verify_passkey_assertion(request, passkeys, challenge):
+    """Verify a fingerprint scan and update the matched sign count.
+
+    Returns ``(passkey, None)`` when the scan is valid, or
+    ``(None, error_message)`` with a plain error string when it is not —
+    the calling view turns that string into a JSON response.
+
+    Callers must scope ``passkeys`` to the session user before calling.
+    """
+    # Read the JSON body the browser posted.
+    try:
+        payload = json.loads(request.body or '{}')
+    except (TypeError, ValueError):
+        return None, 'Invalid request body.'
+
+    try:
+        credential = payload['credential']
+        credential_id = decode_b64url(credential['rawId'])
+    except (KeyError, TypeError):
+        return None, 'Invalid request body.'
+
+    passkey = passkeys.filter(
+        credential_id=encode_b64url(credential_id)
+    ).first()
+
+    if passkey is None:
+        passkey = next(
+            (
+                candidate
+                for candidate in passkeys
+                if decode_stored_credential_id(candidate.credential_id) == credential_id
+            ),
+            None,
+        )
+
+    if passkey is None:
+        return None, 'Fingerprint not recognized.'
+
+    rp_id, origin = relying_party(request)
+
+    try:
+        verified = verify_authentication_response(
+            credential=credential,
+            expected_challenge=decode_b64url(challenge),
+            expected_rp_id=rp_id,
+            expected_origin=origin,
+            credential_public_key=bytes(passkey.public_key),
+            credential_current_sign_count=passkey.sign_count,
+            require_user_verification=True,
+        )
+    except Exception:
+        return None, 'Fingerprint verification failed.'
+
+    # A replayed assertion would not advance the sign count.
+    if passkey.sign_count > 0 and verified.new_sign_count <= passkey.sign_count:
+        return None, 'Fingerprint verification failed.'
+
+    passkey.sign_count = verified.new_sign_count
+    passkey.last_used_at = timezone.now()
+    passkey.save(update_fields=['sign_count', 'last_used_at'])
+
+    return passkey, None
+
+
+def flash_attendance_result(request, status, user=None, reason=None):
+    """Flash a message describing the recorded attendance result."""
+
+    if status == 'rejected':
+        messages.error(request, reason or "This check-in is not allowed.")
+    elif status == 'in':
+        if user is None:
+            messages.success(request, "You're clocked in. Have a good shift!")
+        else:
+            messages.success(request, f"Good to see you, {user.first_name}. You're clocked in.")
+    elif status == 'out':
+        messages.success(request, "You're clocked out. Have a good one!")
+    else:
+        messages.info(request, "Your attendance is already complete for today.")
+
+
+def record_attendance(user, passkey):
+    """Record a fingerprint scan as check-in, check-out, or a rule rejection.
+
+    Returns ``(action, reason)``: ``('in' | 'out' | 'done', None)`` when a row
+    was written or closed, or ``('rejected', message)`` when the configured
+    attendance rules block this scan. The rules are evaluated in the
+    admin-configured time zone against the server clock only.
+    """
+
+    rules = AttendanceSettings.objects.load()
+    now = timezone.now()
+    local = now.astimezone(settings_timezone(rules))
+    today = local.date()
+
+    with transaction.atomic():
+        # Lock the day's row so two scans in the same second can't both clock in.
+        attendance = (
+            Attendance.objects.select_for_update()
+            .filter(user=user, work_date=today)
+            .first()
+        )
+
+        if attendance is None:
+            holidays = dict(Holiday.objects.filter(date=today).values_list('date', 'name'))
+            counted, outcome = evaluate_check_in(rules, local, holidays)
+
+            if not counted:
+                return 'rejected', outcome
+
+            # The savepoint lets the unique constraint resolve a concurrent first scan.
+            try:
+                with transaction.atomic():
+                    Attendance.objects.create(
+                        user=user,
+                        work_date=today,
+                        check_in=now,
+                        status=outcome,
+                        method=Attendance.METHOD_PASSKEY,
+                        passkey=passkey,
+                    )
+                return 'in', None
+            except IntegrityError:
+                attendance = (
+                    Attendance.objects.select_for_update()
+                    .filter(user=user, work_date=today)
+                    .first()
+                )
+
+        if attendance is not None and attendance.check_out is None:
+            # Check-out has no window: only check-ins are governed by the rules.
+            attendance.check_out = now
+            attendance.passkey = passkey
+            attendance.save(update_fields=['check_out', 'passkey'])
+            return 'out', None
+
+        return 'done', None
+
+
 # ---------- Public pages ----------
 
 def home(request):
@@ -115,6 +288,7 @@ def contact_us(request):
     return render(request, 'contact_us.html')
 
 
+# 404 page
 def not_found(request, unmatched):
     """Render the branded not-found page for unmatched URLs, including in debug mode."""
     return render(request, '404.html', status=404)
@@ -231,7 +405,7 @@ def forget_password(request):
 
     # GET: show the form.
     if request.method == 'GET':
-        return render(request, 'auth/forget.html')
+        return render(request, 'auth/forget_password.html')
 
     # POST: find the user and send them a code.
     email = normalize_email(request.POST.get('email'))
@@ -281,10 +455,10 @@ def forget_password(request):
     email.send(fail_silently=False)
 
     messages.success(request, done_message)
-    return redirect('verification')
+    return redirect('code_verification')
 
 
-def verification(request):
+def code_verification(request):
     """Check the code the user typed, then let them set a new password."""
 
     # Guard: someone must have asked for a code first.
@@ -294,7 +468,7 @@ def verification(request):
 
     # GET: show the code form.
     if request.method == 'GET':
-        return render(request, 'auth/verification.html')
+        return render(request, 'auth/code_verification.html')
 
     # POST: check the code.
     code = (request.POST.get('verification_code') or '').strip()
@@ -311,7 +485,7 @@ def verification(request):
 
     if token is None:
         messages.error(request, "Invalid or expired verification code.")
-        return redirect('verification')
+        return redirect('code_verification')
 
     # Mark the code as used so it cannot be reused.
     token.used = True
@@ -336,7 +510,7 @@ def reset_password(request):
 
     # GET: show the form.
     if request.method == 'GET':
-        return render(request, 'auth/reset.html')
+        return render(request, 'auth/reset_password.html')
 
     # POST: validate and save the new password.
     password = request.POST.get('password') or ''
@@ -474,7 +648,7 @@ def passkey_register_begin(request):
     # Tell the authenticator which fingerprints are already enrolled.
     excluded = [
         PublicKeyCredentialDescriptor(
-            id=base64.urlsafe_b64decode(passkey.credential_id)
+            id=decode_stored_credential_id(passkey.credential_id)
         )
         for passkey in user.passkeys.all()
     ]
@@ -544,7 +718,7 @@ def passkey_register_complete(request):
         Passkey.objects.create(
             user=user,
             label=label,
-            credential_id=verified.credential_id,
+            credential_id=encode_b64url(verified.credential_id),
             public_key=verified.credential_public_key,
             sign_count=verified.sign_count,
             transports=clean_transports(payload.get('transports')),
@@ -578,3 +752,147 @@ def passkey_delete(request, passkey_id):
     messages.success(request, "Fingerprint removed.")
 
     return redirect('settings')
+
+
+# ---------- Fingerprint login ----------
+
+def passkey_login_begin(request):
+    """Return authentication options, optionally scoped to an email."""
+    # Only POST is allowed: this endpoint is called by JavaScript.
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    # Read the JSON body the browser posted.
+    try:
+        payload = json.loads(request.body or '{}')
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Invalid request body.'}, status=400)
+
+    email = normalize_email(payload.get('email'))
+    user = None
+    passkeys = []
+
+    if email:
+        user = User.objects.filter(email=email).first()
+
+        if user is None or not user.passkeys.exists():
+            return JsonResponse(
+                {'error': 'Fingerprint login is not available for this account.'},
+                status=400,
+            )
+
+        passkeys = user.passkeys.all()
+
+    options = passkey_authentication_options(request, passkeys)
+
+    request.session['passkey_auth_challenge'] = encode_b64url(options.challenge)
+    request.session['passkey_auth_user'] = user.id if user else None
+
+    return json_options(options)
+
+
+def passkey_login_complete(request):
+    """Verify a passkey assertion, sign in and record attendance."""
+    # Only POST is allowed: this endpoint is called by JavaScript.
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    challenge = request.session.pop('passkey_auth_challenge', None)
+    user_id = request.session.pop('passkey_auth_user', None)
+
+    if not challenge:
+        return JsonResponse({'error': 'Login session expired. Try again.'}, status=400)
+
+    passkeys = Passkey.objects.select_related('user')
+
+    if user_id:
+        passkeys = passkeys.filter(user_id=user_id)
+
+    # Check the scan. On failure we get a plain error message back.
+    passkey, error = verify_passkey_assertion(request, passkeys, challenge)
+
+    if error:
+        return JsonResponse({'error': error}, status=400)
+
+    begin_session(request, passkey.user)
+
+    # A rejected check-in still signs the user in — the rules only decide
+    # whether the scan counts as attendance, not whether they may enter.
+    status, reason = record_attendance(passkey.user, passkey)
+    flash_attendance_result(request, status, user=passkey.user, reason=reason)
+
+    return JsonResponse({
+        'ok': True,
+        'status': status,
+        'redirect': reverse('dashboard'),
+    })
+
+
+# ---------- Dashboard Check in/out ----------
+
+def attendance_begin(request):
+    """Return an assertion challenge for the signed-in user's time clock."""
+    # Only POST is allowed: this endpoint is called by JavaScript.
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    # Guard: JavaScript calls this endpoint, so answer with JSON 403, not a redirect.
+    user = current_user(request)
+
+    if user is None:
+        return JsonResponse({'error': 'Not authenticated.'}, status=403)
+
+    passkeys = list(user.passkeys.all())
+
+    if not passkeys:
+        return JsonResponse(
+            {'error': 'Add a fingerprint in Settings before clocking in.'},
+            status=400,
+        )
+
+    options = passkey_authentication_options(request, passkeys)
+
+    request.session['passkey_attendance_challenge'] = encode_b64url(options.challenge)
+    request.session['passkey_attendance_user'] = user.id
+
+    return json_options(options)
+
+
+def attendance_complete(request):
+    """Verify a dashboard fingerprint scan and record attendance."""
+    # Only POST is allowed: this endpoint is called by JavaScript.
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    # Guard: JavaScript calls this endpoint, so answer with JSON 403, not a redirect.
+    user = current_user(request)
+
+    if user is None:
+        return JsonResponse({'error': 'Not authenticated.'}, status=403)
+
+    challenge = request.session.pop('passkey_attendance_challenge', None)
+    challenge_user = request.session.pop('passkey_attendance_user', None)
+
+    if not challenge or challenge_user != user.id:
+        return JsonResponse({'error': 'Clock session expired. Try again.'}, status=400)
+
+    # Check the scan. On failure we get a plain error message back.
+    passkey, error = verify_passkey_assertion(request, user.passkeys.all(), challenge)
+
+    if error:
+        return JsonResponse({'error': error}, status=400)
+
+    status, reason = record_attendance(user, passkey)
+
+    # Rules rejected the scan: tell the button why (app.js shows `error`).
+    if status == 'rejected':
+        return JsonResponse({'error': reason}, status=400)
+
+    flash_attendance_result(request, status, reason=reason)
+
+    return JsonResponse({
+        'ok': True,
+        'status': status,
+        'redirect': reverse('dashboard'),
+    })
+
