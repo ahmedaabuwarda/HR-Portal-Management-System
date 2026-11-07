@@ -10,7 +10,10 @@ from datetime import timedelta
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.sessions.models import Session
+
 from django.core.mail import EmailMultiAlternatives
+from django.core.paginator import Paginator
+
 from django.db import IntegrityError, transaction
 from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import render, redirect
@@ -18,7 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 from .models import Attendance, AttendanceSettings, Holiday, Passkey, PasswordResetToken, User, normalize_email
 
-from .attendance_rules import evaluate_check_in, settings_timezone
+from .attendance_rules import evaluate_check_in, local_now, settings_timezone
 
 # WebAuthn imports
 from webauthn import generate_authentication_options, generate_registration_options, options_to_json, verify_authentication_response, verify_registration_response
@@ -541,32 +544,35 @@ def reset_password(request):
 # ---------- user dashboard and settings ----------
 
 def dashboard(request):
+    """Render the signed-in user's attendance summary and history."""
+    # Guard: must be signed in.
     if "user_id" not in request.session:
         messages.error(request, "You must log in first!")
         return redirect('home')
-    
+
     user_id = request.session['user_id']
-    today = timezone.localdate()
+    # "Today" is the admin-configured zone's date, not the server's.
+    today = local_now().date()
 
-    # history = Attendance.objects.filter(
-    #     user_id=user_id,
-    # ).select_related('passkey')
+    history = Attendance.objects.filter(
+        user_id=user_id,
+    ).select_related('passkey')
 
-    # context = {
-    #     'passkey_count': Passkey.objects.filter(user_id=user_id).count(),
-    #     'page_obj': Paginator(history, 20).get_page(request.GET.get('page')),
-        # 'open_attendance': Attendance.objects.filter(
-        #     user_id=user_id,
-        #     work_date=today,
-        #     check_out__isnull=True,
-        # ).count(),
-        # 'today_attendance': Attendance.objects.filter(
-        #     user_id=user_id,
-        #     work_date=today,
-        # ).first(),
-    # }
+    context = {
+        'passkey_count': Passkey.objects.filter(user_id=user_id).count(),
+        'page_obj': Paginator(history, 20).get_page(request.GET.get('page')),
+        'open_attendance': Attendance.objects.filter(
+            user_id=user_id,
+            work_date=today,
+            check_out__isnull=True,
+        ).count(),
+        'today_attendance': Attendance.objects.filter(
+            user_id=user_id,
+            work_date=today,
+        ).first(),
+    }
 
-    return render(request, 'user/dashboard.html')
+    return render(request, 'user/dashboard.html', context)
 
 
 def settings(request):
