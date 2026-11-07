@@ -25,11 +25,21 @@
             </div>
             <div class="d-flex gap-2">
               <button type="submit" class="btn btn-solid theme-primary flex-grow-1 d-inline-flex align-items-center justify-content-center gap-2">{% include "icons/log-in.html" with px=18 %} Log in</button>
-              <button type="button" class="btn btn-outline theme-primary" id="passkey_login" title="Log in/check in with fingerprint" aria-describedby="passkey_error">
+              <button
+                type="button"
+                class="btn btn-outline theme-primary"
+                id="passkey_login"
+                data-begin-url="{% url 'passkey_login_begin' %}"
+                data-complete-url="{% url 'passkey_login_complete' %}"
+                data-dashboard-url="{% url 'dashboard' %}"
+                title="Log in/check in with fingerprint"
+                aria-describedby="passkey_error"
+              >
                 {% include "icons/fingerprint.html" with px=18 %}
                 <span class="visually-hidden">Log in with fingerprint</span>
               </button>
             </div>
+            <div class="alert py-3 px-4 small mt-3 mb-0 d-none" id="passkey_error" role="status" aria-live="polite"></div>
           </form>
           <p class="mt-4 mb-0 text-center small fg-2">New here? <a class="d-inline-flex align-items-center gap-1" href="{% url 'register' %}"> {% include 'icons/user-plus.html' with px=14 %}Create an account</a></p>
           <p class="mt-4 mb-0 text-center small fg-2"><a class="d-inline-flex align-items-center gap-1" href="{% url 'forget_password' %}">Forget your password?</a></p>
