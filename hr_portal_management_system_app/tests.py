@@ -1,4 +1,6 @@
 import bcrypt
+import base64
+import json
 import re
 
 from datetime import timedelta
@@ -8,7 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import PasswordResetToken, User
+from .models import Passkey, PasswordResetToken, User
 
 
 class NotFoundPageTests(TestCase):
@@ -48,7 +50,7 @@ class ForgetPasswordTests(TestCase):
         make_user()
         response = self.client.post(reverse('forget_password'), {'email': 'sara@example.com'})
 
-        self.assertRedirects(response, reverse('verification'))
+        self.assertRedirects(response, reverse('code_verification'))
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['sara@example.com'])
 
@@ -66,16 +68,16 @@ class VerificationTests(TestCase):
         code = request_code(self.client, 'sara@example.com')
         wrong_code = '000000' if code != '000000' else '111111'
 
-        response = self.client.post(reverse('verification'), {'verification_code': wrong_code})
+        response = self.client.post(reverse('code_verification'), {'verification_code': wrong_code})
 
-        self.assertRedirects(response, reverse('verification'))
+        self.assertRedirects(response, reverse('code_verification'))
         self.assertNotIn('reset_user_id', self.client.session)
 
     def test_right_code_opens_reset_page(self):
         user = make_user()
         code = request_code(self.client, 'sara@example.com')
 
-        response = self.client.post(reverse('verification'), {'verification_code': code})
+        response = self.client.post(reverse('code_verification'), {'verification_code': code})
 
         self.assertRedirects(response, reverse('reset_password'))
         self.assertEqual(self.client.session['reset_user_id'], user.id)
@@ -89,31 +91,31 @@ class VerificationTests(TestCase):
             created_at=timezone.now() - timedelta(minutes=11)
         )
 
-        response = self.client.post(reverse('verification'), {'verification_code': code})
+        response = self.client.post(reverse('code_verification'), {'verification_code': code})
 
-        self.assertRedirects(response, reverse('verification'))
+        self.assertRedirects(response, reverse('code_verification'))
         self.assertNotIn('reset_user_id', self.client.session)
 
     def test_verification_page_needs_a_requested_code(self):
-        response = self.client.get(reverse('verification'))
+        response = self.client.get(reverse('code_verification'))
         self.assertRedirects(response, reverse('forget_password'))
 
     def test_verification_page_shows_after_requesting_a_code(self):
         make_user()
         request_code(self.client, 'sara@example.com')
 
-        response = self.client.get(reverse('verification'))
+        response = self.client.get(reverse('code_verification'))
 
         self.assertEqual(response.status_code, 200)
 
     def test_code_cannot_be_used_twice(self):
         make_user()
         code = request_code(self.client, 'sara@example.com')
-        self.client.post(reverse('verification'), {'verification_code': code})
+        self.client.post(reverse('code_verification'), {'verification_code': code})
 
-        response = self.client.post(reverse('verification'), {'verification_code': code})
+        response = self.client.post(reverse('code_verification'), {'verification_code': code})
 
-        self.assertRedirects(response, reverse('verification'))
+        self.assertRedirects(response, reverse('code_verification'))
 
 
 class ResetPasswordTests(TestCase):
@@ -171,3 +173,33 @@ class ResetPasswordTests(TestCase):
         response = self.client.get(reverse('reset_password'))
 
         self.assertEqual(response.status_code, 200)
+
+
+class PasskeyLoginOptionsTests(TestCase):
+
+    def test_login_options_decode_legacy_and_base64url_credential_ids(self):
+        user = make_user()
+        credential_id = b'\x01\x02credential-id'
+        encoded_id = base64.urlsafe_b64encode(credential_id).decode().rstrip('=')
+
+        for stored_id in (str(credential_id), encoded_id):
+            with self.subTest(stored_id=stored_id):
+                Passkey.objects.create(
+                    user=user,
+                    credential_id=stored_id,
+                    public_key=b'public-key',
+                )
+
+                response = self.client.post(
+                    reverse('passkey_login_begin'),
+                    data=json.dumps({'email': user.email}),
+                    content_type='application/json',
+                )
+
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(
+                    response.json()['allowCredentials'][0]['id'],
+                    encoded_id,
+                )
+
+                Passkey.objects.filter(user=user).delete()
