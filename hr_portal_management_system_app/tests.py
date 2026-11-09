@@ -4,6 +4,7 @@ import json
 import re
 
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -139,6 +140,31 @@ class ResetPasswordTests(TestCase):
 
         response = self.do_reset('NewPassword1', 'NewPassword1')
 
+        self.assertRedirects(response, reverse('login'))
+        user.refresh_from_db()
+        self.assertTrue(bcrypt.checkpw(b'NewPassword1', user.password.encode()))
+
+    def test_password_change_sends_a_notification_email(self):
+        user = make_user()
+        self.logged_in_session(user.id)
+
+        self.do_reset('NewPassword1', 'NewPassword1')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['sara@example.com'])
+        self.assertIn('password was changed', mail.outbox[0].subject)
+
+    def test_reset_succeeds_even_when_the_email_fails(self):
+        user = make_user()
+        self.logged_in_session(user.id)
+
+        with patch(
+            'hr_portal_management_system_app.auth.EmailMultiAlternatives.send',
+            side_effect=Exception('SMTP is down'),
+        ):
+            response = self.do_reset('NewPassword1', 'NewPassword1')
+
+        # The password is already saved, so the flow still finishes.
         self.assertRedirects(response, reverse('login'))
         user.refresh_from_db()
         self.assertTrue(bcrypt.checkpw(b'NewPassword1', user.password.encode()))
@@ -295,3 +321,48 @@ class AbsentAttendanceTests(TestCase):
         record.refresh_from_db()
         self.assertEqual(record.status, Attendance.STATUS_PRESENT)
         self.assertContains(response, 'In progress')
+
+
+class SettingsPasswordChangeTests(TestCase):
+    """Changing the password from Settings sends the same notice."""
+
+    def change_password(self):
+        return self.client.post(
+            reverse('settings'),
+            {
+                'action': 'password',
+                'current_password': 'Password123',
+                'new_password': 'NewPassword1',
+                'confirm_password': 'NewPassword1',
+            },
+        )
+
+    def signed_in_client(self):
+        make_user()
+        self.client.post(
+            reverse('login'),
+            {'email': 'sara@example.com', 'password': 'Password123'},
+        )
+
+    def test_password_change_sends_a_notification_email(self):
+        self.signed_in_client()
+
+        response = self.change_password()
+
+        self.assertRedirects(response, reverse('settings'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['sara@example.com'])
+        self.assertIn('password was changed', mail.outbox[0].subject)
+
+    def test_password_change_survives_a_failed_email(self):
+        self.signed_in_client()
+
+        with patch(
+            'hr_portal_management_system_app.auth.EmailMultiAlternatives.send',
+            side_effect=Exception('SMTP is down'),
+        ):
+            response = self.change_password()
+
+        self.assertRedirects(response, reverse('settings'))
+        user = User.objects.get(email='sara@example.com')
+        self.assertTrue(bcrypt.checkpw(b'NewPassword1', user.password.encode()))

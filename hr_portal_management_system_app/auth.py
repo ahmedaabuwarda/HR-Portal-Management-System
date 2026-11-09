@@ -215,6 +215,38 @@ def code_verification(request):
     return redirect('reset_password')
 
 
+def send_password_changed_email(user):
+    """Tell the account owner that their password was just changed."""
+
+    subject = "Your HR Portal password was changed"
+    text_content = (
+        "Your password was changed just now.\n\n"
+        "If you made this change, no further action is needed.\n"
+        "If you did not change it, reply to this email immediately so we can secure your account.\n\n"
+        "Thank you,\nHR Portal team"
+    )
+    html_content = """
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937;">
+            <p>Hello,</p>
+            <p>Your password was changed just now.</p>
+            <p>If you made this change, no further action is needed.</p>
+            <p><strong>If you did not change it, reply to this email immediately</strong> so we can secure your account.</p>
+            <p>Thank you,<br>HR Portal team</p>
+        </body>
+        </html>
+    """
+
+    email = EmailMultiAlternatives(
+        subject,
+        text_content,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+    )
+    email.attach_alternative(html_content, "text/html")
+    email.send(fail_silently=False)
+
+
 def reset_password(request):
     """Save the new password once the code has been verified."""
 
@@ -252,5 +284,15 @@ def reset_password(request):
     # Sign out every other device.
     revoke_other_sessions(user, request.session.session_key)
 
-    messages.success(request, "Password reset successfully! Please log in.")
+    # Tell the owner their password changed. The new password is already
+    # saved, so a failed send only changes the message, never the outcome.
+    try:
+        send_password_changed_email(user)
+        messages.success(request, "Password reset successfully! Please log in.")
+    except Exception:
+        messages.warning(
+            request,
+            "Password changed, but we couldn't send the confirmation email.",
+        )
+
     return redirect('login')

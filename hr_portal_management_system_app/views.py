@@ -145,7 +145,16 @@ def settings(request):
 
             revoke_other_sessions(user, request.session.session_key)
 
-            messages.success(request, "Password updated successfully!")
+            # Same security notice as a password reset: a failed send only
+            # changes the message, the new password is already saved.
+            try:
+                auth.send_password_changed_email(user)
+                messages.success(request, "Password updated successfully!")
+            except Exception:
+                messages.warning(
+                    request,
+                    "Password updated, but we couldn't send the confirmation email.",
+                )
 
         else:
             messages.error(request, "Unknown settings action.")
