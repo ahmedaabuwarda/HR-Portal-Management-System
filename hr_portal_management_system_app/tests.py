@@ -3,14 +3,16 @@ import base64
 import json
 import re
 
-from datetime import timedelta
+from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Passkey, PasswordResetToken, User
+from .attendance_rules import evaluate_check_in, local_now
+from .models import Attendance, AttendanceSettings, Passkey, PasswordResetToken, User
 
 
 class NotFoundPageTests(TestCase):
@@ -142,6 +144,31 @@ class ResetPasswordTests(TestCase):
         user.refresh_from_db()
         self.assertTrue(bcrypt.checkpw(b'NewPassword1', user.password.encode()))
 
+    def test_password_change_sends_a_notification_email(self):
+        user = make_user()
+        self.logged_in_session(user.id)
+
+        self.do_reset('NewPassword1', 'NewPassword1')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['sara@example.com'])
+        self.assertIn('password was changed', mail.outbox[0].subject)
+
+    def test_reset_succeeds_even_when_the_email_fails(self):
+        user = make_user()
+        self.logged_in_session(user.id)
+
+        with patch(
+            'hr_portal_management_system_app.auth.EmailMultiAlternatives.send',
+            side_effect=Exception('SMTP is down'),
+        ):
+            response = self.do_reset('NewPassword1', 'NewPassword1')
+
+        # The password is already saved, so the flow still finishes.
+        self.assertRedirects(response, reverse('login'))
+        user.refresh_from_db()
+        self.assertTrue(bcrypt.checkpw(b'NewPassword1', user.password.encode()))
+
     def test_short_password_is_rejected(self):
         user = make_user()
         self.logged_in_session(user.id)
@@ -203,3 +230,139 @@ class PasskeyLoginOptionsTests(TestCase):
                 )
 
                 Passkey.objects.filter(user=user).delete()
+
+
+class CheckInWindowTests(TestCase):
+    """The window is strict: no scans before it opens or after it closes."""
+
+    def rules(self, out_of_window='reject'):
+        rules = AttendanceSettings.objects.load()
+        # Every day is a working day here, so the date never decides the outcome.
+        rules.working_days = list(range(7))
+        rules.out_of_window = out_of_window
+        rules.save()
+        return rules
+
+    def test_scan_before_window_opens_is_rejected(self):
+        counted, reason = evaluate_check_in(
+            self.rules(), datetime(2026, 11, 9, 6, 30)
+        )
+
+        self.assertFalse(counted)
+        self.assertIn('opens at 07:00', reason)
+
+    def test_scan_after_window_closes_is_rejected(self):
+        # 6 PM used to be accepted as 'late' because the old default was 'late'.
+        counted, reason = evaluate_check_in(
+            self.rules(), datetime(2026, 11, 9, 18, 0)
+        )
+
+        self.assertFalse(counted)
+        self.assertIn('closed at 10:00', reason)
+
+    def test_scan_after_start_but_inside_window_is_late(self):
+        counted, outcome = evaluate_check_in(
+            self.rules(), datetime(2026, 11, 9, 9, 30)
+        )
+
+        self.assertTrue(counted)
+        self.assertEqual(outcome, 'late')
+
+    def test_scan_before_start_counts_as_present(self):
+        counted, outcome = evaluate_check_in(
+            self.rules(), datetime(2026, 11, 9, 8, 0)
+        )
+
+        self.assertTrue(counted)
+        self.assertEqual(outcome, 'present')
+
+    def test_late_policy_still_allows_an_evening_scan(self):
+        # The option stays available for an admin who wants it.
+        counted, outcome = evaluate_check_in(
+            self.rules('late'), datetime(2026, 11, 9, 18, 0)
+        )
+
+        self.assertTrue(counted)
+        self.assertEqual(outcome, 'late')
+
+
+class AbsentAttendanceTests(TestCase):
+    """A day with a clock-in but no clock-out ends absent, not 'in progress'."""
+
+    def open_record(self, work_date):
+        return Attendance.objects.create(
+            user=make_user(),
+            work_date=work_date,
+            check_in=timezone.now(),
+            status=Attendance.STATUS_PRESENT,
+        )
+
+    def open_dashboard(self):
+        self.client.post(
+            reverse('login'),
+            {'email': 'sara@example.com', 'password': 'Password123'},
+        )
+        return self.client.get(reverse('dashboard'))
+
+    def test_past_day_without_clock_out_is_marked_absent(self):
+        record = self.open_record(local_now().date() - timedelta(days=1))
+
+        response = self.open_dashboard()
+
+        record.refresh_from_db()
+        self.assertEqual(record.status, Attendance.STATUS_ABSENT)
+        self.assertContains(response, 'Absent')
+
+    def test_today_without_clock_out_stays_in_progress(self):
+        record = self.open_record(local_now().date())
+
+        response = self.open_dashboard()
+
+        record.refresh_from_db()
+        self.assertEqual(record.status, Attendance.STATUS_PRESENT)
+        self.assertContains(response, 'In progress')
+
+
+class SettingsPasswordChangeTests(TestCase):
+    """Changing the password from Settings sends the same notice."""
+
+    def change_password(self):
+        return self.client.post(
+            reverse('settings'),
+            {
+                'action': 'password',
+                'current_password': 'Password123',
+                'new_password': 'NewPassword1',
+                'confirm_password': 'NewPassword1',
+            },
+        )
+
+    def signed_in_client(self):
+        make_user()
+        self.client.post(
+            reverse('login'),
+            {'email': 'sara@example.com', 'password': 'Password123'},
+        )
+
+    def test_password_change_sends_a_notification_email(self):
+        self.signed_in_client()
+
+        response = self.change_password()
+
+        self.assertRedirects(response, reverse('settings'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['sara@example.com'])
+        self.assertIn('password was changed', mail.outbox[0].subject)
+
+    def test_password_change_survives_a_failed_email(self):
+        self.signed_in_client()
+
+        with patch(
+            'hr_portal_management_system_app.auth.EmailMultiAlternatives.send',
+            side_effect=Exception('SMTP is down'),
+        ):
+            response = self.change_password()
+
+        self.assertRedirects(response, reverse('settings'))
+        user = User.objects.get(email='sara@example.com')
+        self.assertTrue(bcrypt.checkpw(b'NewPassword1', user.password.encode()))
