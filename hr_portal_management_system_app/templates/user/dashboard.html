@@ -46,8 +46,7 @@
               {% endif %}
             </div>
             <p class="mb-0 fg-2" id="time-clock-status">
-              {% if today_attendance.check_out %} Clocked out at {{ today_attendance.check_out|date:"g:i A" }}. Today's attendance is complete. {% elif today_attendance %} Clocked in at {{
-              today_attendance.check_in|date:"g:i A" }}. You're on the clock.{% if not passkey_count %} Add a fingerprint to check out.{% endif %} {% elif not passkey_count %} Add a fingerprint to check in and out from
+              {% if today_attendance.check_out %} Clocked out at {{ today_attendance.check_out|date:"g:i A" }}. Today's attendance is complete. {% elif today_attendance %} Clocked in at {{ today_attendance.check_in|date:"g:i A" }}. You're on the clock.{% if not passkey_count %} Add a fingerprint to check out.{% endif %} {% elif not passkey_count %} Add a fingerprint to check in and out from
               this page. {% else %} Start your day with a quick fingerprint scan. {% endif %}
             </p>
           </div>
@@ -151,13 +150,17 @@
               <td class="text-nowrap">{{ record.check_in|date:"g:i A" }}</td>
               <td class="text-nowrap">{% if record.check_out %}{{ record.check_out|date:"g:i A" }}{% else %}<span class="fg-2">—</span>{% endif %}</td>
               <td class="text-nowrap">
-                {% if record.status == 'late' %}
+                {% if record.status == 'absent' %}
+                <span class="badge badge-subtle rounded-pill theme-danger">Absent</span>
+                {% elif record.status == 'late' %}
                 <span class="badge badge-subtle rounded-pill theme-warning">Late</span>
                 {% else %}
                 <span class="badge badge-subtle rounded-pill theme-success">Present</span>
                 {% endif %}
               </td>
-              <td class="text-nowrap">{% if record.check_out %}{{ record.duration_display }}{% else %}<span class="badge badge-subtle rounded-pill theme-primary">In progress</span>{% endif %}</td>
+              <td class="text-nowrap">
+                {% if record.check_out %}{{ record.duration_display }}{% elif record.status == 'absent' %}<span class="fg-2">—</span>{% else %}<span class="badge badge-subtle rounded-pill theme-primary">In progress</span>{% endif %}
+              </td>
               <td class="text-nowrap small fg-2">{{ record.get_method_display }}{% if record.passkey %} · {{ record.passkey.label }}{% endif %}</td>
             </tr>
             {% empty %}

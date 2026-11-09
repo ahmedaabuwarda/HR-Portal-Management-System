@@ -215,6 +215,7 @@ class User(models.Model):
     last_name = models.CharField(max_length=255, default=None)
     email = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=255, default=None)
+    is_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     objects = UserManager()
@@ -251,11 +252,6 @@ class Passkey(models.Model):
 
         ordering = ['-created_at']
 
-    def __str__(self):
-        """Return a readable passkey label."""
-
-        return f"{self.user.email} - {self.label}"
-
 
 class AttendanceManager(models.Manager):
     """Manager exposing the validator for admin record corrections."""
@@ -287,7 +283,7 @@ class AttendanceManager(models.Manager):
                 errors['check_out.order'] = "Check-out cannot be before check-in!"
 
         if status not in dict(Attendance.STATUS_CHOICES):
-            errors['status.invalid'] = "Status must be present or late!"
+            errors['status.invalid'] = "Status must be present, late or absent!"
 
         if note == '':
             errors['note.required'] = "An audit note is required for every correction!"
@@ -304,9 +300,11 @@ class Attendance(models.Model):
     ]
     STATUS_PRESENT = 'present'
     STATUS_LATE = 'late'
+    STATUS_ABSENT = 'absent'
     STATUS_CHOICES = [
         (STATUS_PRESENT, 'Present'),
         (STATUS_LATE, 'Late'),
+        (STATUS_ABSENT, 'Absent'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendance')
@@ -345,6 +343,10 @@ class Attendance(models.Model):
         """Format the worked duration, or ``In progress`` while open."""
 
         if self.check_out is None:
+            # The day closed without a clock-out: it was marked absent.
+            if self.status == self.STATUS_ABSENT:
+                return "No check-out"
+
             return "In progress"
 
         seconds = int((self.check_out - self.check_in).total_seconds())
@@ -468,7 +470,7 @@ class AttendanceSettings(models.Model):
     out_of_window = models.CharField(
         max_length=10,
         choices=OUT_OF_WINDOW_CHOICES,
-        default=OUT_OF_WINDOW_LATE,
+        default=OUT_OF_WINDOW_REJECT,
     )
     allow_non_working = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
