@@ -3,14 +3,15 @@ import base64
 import json
 import re
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Passkey, PasswordResetToken, User
+from .attendance_rules import evaluate_check_in, local_now
+from .models import Attendance, AttendanceSettings, Passkey, PasswordResetToken, User
 
 
 class NotFoundPageTests(TestCase):
@@ -203,3 +204,94 @@ class PasskeyLoginOptionsTests(TestCase):
                 )
 
                 Passkey.objects.filter(user=user).delete()
+
+
+class CheckInWindowTests(TestCase):
+    """The window is strict: no scans before it opens or after it closes."""
+
+    def rules(self, out_of_window='reject'):
+        rules = AttendanceSettings.objects.load()
+        # Every day is a working day here, so the date never decides the outcome.
+        rules.working_days = list(range(7))
+        rules.out_of_window = out_of_window
+        rules.save()
+        return rules
+
+    def test_scan_before_window_opens_is_rejected(self):
+        counted, reason = evaluate_check_in(
+            self.rules(), datetime(2026, 11, 9, 6, 30)
+        )
+
+        self.assertFalse(counted)
+        self.assertIn('opens at 07:00', reason)
+
+    def test_scan_after_window_closes_is_rejected(self):
+        # 6 PM used to be accepted as 'late' because the old default was 'late'.
+        counted, reason = evaluate_check_in(
+            self.rules(), datetime(2026, 11, 9, 18, 0)
+        )
+
+        self.assertFalse(counted)
+        self.assertIn('closed at 10:00', reason)
+
+    def test_scan_after_start_but_inside_window_is_late(self):
+        counted, outcome = evaluate_check_in(
+            self.rules(), datetime(2026, 11, 9, 9, 30)
+        )
+
+        self.assertTrue(counted)
+        self.assertEqual(outcome, 'late')
+
+    def test_scan_before_start_counts_as_present(self):
+        counted, outcome = evaluate_check_in(
+            self.rules(), datetime(2026, 11, 9, 8, 0)
+        )
+
+        self.assertTrue(counted)
+        self.assertEqual(outcome, 'present')
+
+    def test_late_policy_still_allows_an_evening_scan(self):
+        # The option stays available for an admin who wants it.
+        counted, outcome = evaluate_check_in(
+            self.rules('late'), datetime(2026, 11, 9, 18, 0)
+        )
+
+        self.assertTrue(counted)
+        self.assertEqual(outcome, 'late')
+
+
+class AbsentAttendanceTests(TestCase):
+    """A day with a clock-in but no clock-out ends absent, not 'in progress'."""
+
+    def open_record(self, work_date):
+        return Attendance.objects.create(
+            user=make_user(),
+            work_date=work_date,
+            check_in=timezone.now(),
+            status=Attendance.STATUS_PRESENT,
+        )
+
+    def open_dashboard(self):
+        self.client.post(
+            reverse('login'),
+            {'email': 'sara@example.com', 'password': 'Password123'},
+        )
+        return self.client.get(reverse('dashboard'))
+
+    def test_past_day_without_clock_out_is_marked_absent(self):
+        record = self.open_record(local_now().date() - timedelta(days=1))
+
+        response = self.open_dashboard()
+
+        record.refresh_from_db()
+        self.assertEqual(record.status, Attendance.STATUS_ABSENT)
+        self.assertContains(response, 'Absent')
+
+    def test_today_without_clock_out_stays_in_progress(self):
+        record = self.open_record(local_now().date())
+
+        response = self.open_dashboard()
+
+        record.refresh_from_db()
+        self.assertEqual(record.status, Attendance.STATUS_PRESENT)
+        self.assertContains(response, 'In progress')
