@@ -1,0 +1,134 @@
+{% extends 'layout.html' %} {% block title %}Users{% endblock %} {% block content %}
+<div class="container py-4 mt-7">
+  <header class="d-flex flex-wrap align-items-center justify-content-between gap-4 mb-7">
+    <div class="d-flex align-items-center gap-3">
+      <span class="avatar avatar-subtle theme-primary fw-semibold" aria-hidden="true">{% include "icons/users.html" with px=20 %}</span>
+      <div>
+        <h1 class="h3 mb-0">All users</h1>
+        <p class="fg-2 small mb-0">Every account registered in the portal.</p>
+      </div>
+    </div>
+
+    <a class="btn btn-outline theme-primary d-inline-flex align-items-center gap-2" href="{% url 'admin_attendance_hours' %}">
+      {% include "icons/clock.html" with px=16 %} Attending hours
+    </a>
+  </header>
+
+  <div class="row row-cols-1 md:row-cols-3 gx-3 gy-3 mb-4">
+    <div class="col">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/users.html" with px=16 %} </span>
+            <p class="small fg-2 mb-0">Total users</p>
+          </div>
+          <p class="h3 mb-1">{{ total_users }}</p>
+          <p class="small fg-2 mb-0">Registered accounts.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/user.html" with px=16 %} </span>
+            <p class="small fg-2 mb-0">Admins</p>
+          </div>
+          <p class="h3 mb-1">{{ admin_count }}</p>
+          <p class="small fg-2 mb-0">Can manage attending hours.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/calendar-check.html" with px=16 %} </span>
+            <p class="small fg-2 mb-0">Attendance records</p>
+          </div>
+          <p class="h3 mb-1">{{ record_count }}</p>
+          <p class="small fg-2 mb-0">Clock-ins across everyone.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+          <h2 class="h5 mb-0 d-flex align-items-center gap-2">
+            <span class="fg-primary d-inline-flex">{% include "icons/users.html" with px=18 %}</span>
+            Registered users
+          </h2>
+          <p class="small fg-2 mb-0">Name, email, and role for each account.</p>
+        </div>
+        <span class="small fg-2">{{ page_obj.paginator.count }} user{{ page_obj.paginator.count|pluralize }}</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Registered</th>
+              <th scope="col">Attendance records</th>
+              <th scope="col">Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for account in page_obj %}
+            <tr>
+              <td class="text-nowrap fg-2">{{ account.id }}</td>
+              <td class="text-nowrap">{{ account.first_name }} {{ account.last_name }}</td>
+              <td class="text-nowrap">{{ account.email }}</td>
+              <td class="text-nowrap">{{ account.created_at|date:"M j, Y" }}</td>
+              <td class="text-nowrap">{{ account.attendance_count }}</td>
+              <td class="text-nowrap">
+                {% if account.is_admin %}
+                <span class="badge badge-subtle rounded-pill theme-primary">Admin</span>
+                {% else %}
+                <span class="badge badge-subtle rounded-pill theme-secondary">Member</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mb-2" aria-hidden="true"> {% include "icons/users.html" with px=20 %} </span>
+                <p class="mb-1 fw-medium">No users yet</p>
+                <p class="small fg-2 mb-0">Accounts appear here as people register.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" aria-label="User pages">
+        <span class="small fg-2">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <ul class="pagination mb-0">
+          <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
+            {% if page_obj.has_previous %}
+            <a class="page-link d-inline-flex align-items-center gap-1" href="?page={{ page_obj.previous_page_number }}">{% include "icons/chevron-left.html" with px=14 %}Previous</a>
+            {% else %}
+            <span class="page-link d-inline-flex align-items-center gap-1">{% include "icons/chevron-left.html" with px=14 %}Previous</span>
+            {% endif %}
+          </li>
+          <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+            {% if page_obj.has_next %}
+            <a class="page-link d-inline-flex align-items-center gap-1" href="?page={{ page_obj.next_page_number }}">Next{% include "icons/chevron-right.html" with px=14 %}</a>
+            {% else %}
+            <span class="page-link d-inline-flex align-items-center gap-1">Next{% include "icons/chevron-right.html" with px=14 %}</span>
+            {% endif %}
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

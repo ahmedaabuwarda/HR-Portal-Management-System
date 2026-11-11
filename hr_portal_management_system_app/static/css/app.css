@@ -47,3 +47,27 @@
   /* Darken success text so subtle green badges meet AA in light mode. */
   --bs-success-fg: light-dark(var(--bs-green-700), var(--bs-green-400));
 }
+
+/* B6's theme-* class fills the whole check/radio, so an unchecked box would be
+   a solid blob too. Keep the unchecked state neutral so only the checked state
+   carries the theme color — the behavior the B6 docs describe. */
+.check:not(:checked, :disabled),
+.radio:not(:checked, :disabled) {
+  background-color: var(--bs-bg-body);
+  border-color: var(--bs-border-color);
+}
+
+/* B6 only ships modern (width >= ...) media syntax; mirror the settings-page
+   two-column split with classic min-width rules so it also holds wherever
+   that syntax is not applied. */
+@media (min-width: 768px) {
+  .md\:col-7 {
+    flex: none;
+    width: 58.3333%;
+  }
+
+  .md\:col-5 {
+    flex: none;
+    width: 41.6667%;
+  }
+}

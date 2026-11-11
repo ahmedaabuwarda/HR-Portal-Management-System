@@ -8,7 +8,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from .models import PasswordResetToken, User, normalize_email
+from .models import PasswordResetToken, User
+from .utils import normalize_email
 
 from .helper_functions import begin_session, DUMMY_PASSWORD_HASH, revoke_other_sessions
 
