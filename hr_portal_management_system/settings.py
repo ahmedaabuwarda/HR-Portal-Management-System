@@ -140,3 +140,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'hrportal.support@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'qwvg sfvn wasj asqs')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'hrportal.support@gmail.com'
+# AI attendance analysis (Google Gemini)
+# Free key: https://aistudio.google.com/apikey
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY','')

@@ -5,11 +5,14 @@ runs for a visitor who is not signed in as an admin. Django's own admin
 site is not used at all.
 """
 
+import json
+import urllib.request
 from zoneinfo import available_timezones
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import redirect, render
 
 from .helper_functions import current_user
@@ -122,3 +125,79 @@ def admin_attendance_hours(request):
         'window': "Window rules updated!",
     }.get(section, "Attending hours updated!"))
     return redirect('admin_attendance_hours')
+
+
+def _ask_gemini(prompt):
+    """Send one prompt to Gemini and return its reply (stdlib only)."""
+
+    if not settings.GEMINI_API_KEY:
+        raise RuntimeError("GEMINI_API_KEY is not set")
+
+    body = json.dumps({
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"max_output_tokens": 1000},
+    }).encode()
+
+    call = urllib.request.Request(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "x-goog-api-key": settings.GEMINI_API_KEY,
+        },
+    )
+
+    with urllib.request.urlopen(call, timeout=30) as reply:
+        data = json.loads(reply.read().decode())
+
+    # Skip any thought parts and return the first real text part.
+    parts = data["candidates"][0]["content"].get("parts", [])
+    text = next((part["text"] for part in parts if "text" in part), None)
+
+    if not text:
+        raise RuntimeError("Gemini returned no text")
+
+    return text
+
+
+def admin_ai_analysis(request):
+    """Show one employee's attendance counts, or a short AI write-up of them."""
+
+    _admin, denied = require_admin(request)
+
+    if denied is not None:
+        return denied
+
+    raw_id = request.GET.get('user') or ''
+    target = User.objects.filter(pk=raw_id).first() if raw_id.isdigit() else None
+
+    if target is None:
+        messages.error(request, "That user does not exist!")
+        return redirect('admin_users')
+
+    stats = target.attendance.aggregate(
+        total=Count('id'),
+        present=Count('id', filter=Q(status=Attendance.STATUS_PRESENT)),
+        late=Count('id', filter=Q(status=Attendance.STATUS_LATE)),
+        absent=Count('id', filter=Q(status=Attendance.STATUS_ABSENT)),
+    )
+
+    analysis = None
+
+    # POST: ask Gemini for a short paragraph about these numbers.
+    if request.method == 'POST':
+        prompt = (
+            "You are an HR assistant. In 3-4 plain sentences analyze this "
+            f"employee's attendance: {stats['total']} recorded days - "
+            f"{stats['present']} present, {stats['late']} late, "
+            f"{stats['absent']} absent. Comment on reliability and give "
+            "one short suggestion."
+        )
+
+        try:
+            analysis = _ask_gemini(prompt)
+        except Exception:
+            messages.error(request, "AI analysis failed - check the key and try again.")
+
+    context = {'target': target, 'stats': stats, 'analysis': analysis}
+    return render(request, 'admin/analysis.html', context)
