@@ -1,0 +1,95 @@
+{% extends 'layout.html' %} {% block title %}AI analysis{% endblock %} {% block content %}
+<div class="container py-4 mt-7">
+  <header class="d-flex flex-wrap align-items-center justify-content-between gap-4 mb-7">
+    <div class="d-flex align-items-center gap-3">
+      <span class="avatar avatar-subtle theme-primary fw-semibold" aria-hidden="true">{% include "icons/history.html" with px=20 %}</span>
+      <div>
+        <h1 class="h3 mb-0">AI attendance analysis</h1>
+        <p class="fg-2 small mb-0">A short write-up of {{ target.first_name }} {{ target.last_name }}'s attendance.</p>
+      </div>
+    </div>
+
+    <a class="btn btn-outline theme-primary d-inline-flex align-items-center gap-2" href="{% url 'admin_users' %}">
+      {% include "icons/users.html" with px=16 %} Back to users
+    </a>
+  </header>
+
+  <div class="row row-cols-1 md:row-cols-4 gx-3 gy-3 mb-4">
+    <div class="col">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/info.html" with px=16 %} </span>
+            <p class="small fg-2 mb-0">Recorded days</p>
+          </div>
+          <p class="h3 mb-1">{{ stats.total }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/calendar-check.html" with px=16 %} </span>
+            <p class="small fg-2 mb-0">Present</p>
+          </div>
+          <p class="h3 mb-1">{{ stats.present }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/clock.html" with px=16 %} </span>
+            <p class="small fg-2 mb-0">Late</p>
+          </div>
+          <p class="h3 mb-1">{{ stats.late }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/calendar-x.html" with px=16 %} </span>
+            <p class="small fg-2 mb-0">Absent</p>
+          </div>
+          <p class="h3 mb-1">{{ stats.absent }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <h2 class="h5 mb-1">{{ target.first_name }} {{ target.last_name }}</h2>
+          <p class="small fg-2 mb-0">{{ target.email }}</p>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-solid theme-primary d-inline-flex align-items-center gap-2">
+            {% include "icons/info.html" with px=16 %} Analyze with AI
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if analysis %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="h5 mb-2 d-flex align-items-center gap-2">
+        <span class="fg-primary d-inline-flex">{% include "icons/info.html" with px=18 %}</span>
+        AI analysis
+      </h2>
+      <p class="mb-0">{{ analysis|linebreaksbr }}</p>
+    </div>
+  </div>
+  {% else %}
+  <p class="small fg-2">Click "Analyze with AI" for a short write-up of this employee's attendance.</p>
+  {% endif %}
+</div>
+{% endblock %}
