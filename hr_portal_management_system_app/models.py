@@ -7,69 +7,20 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from .utils import default_working_days, normalize_email, parse_time, parse_datetime_local, working_days_value
+
 # Create your models here.
 
 EMAIL_RE = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 
-# Sun-Thu (Django weekday(): 0 = Monday ... 6 = Sunday), matching the local week.
-DEFAULT_WORKING_DAYS = [6, 0, 1, 2, 3]
 OUT_OF_WINDOW_REJECT = 'reject'
 OUT_OF_WINDOW_LATE = 'late'
+OUT_OF_WINDOW_UPSENT = 'upsent'
 OUT_OF_WINDOW_CHOICES = [
     (OUT_OF_WINDOW_REJECT, 'Reject the check-in'),
     (OUT_OF_WINDOW_LATE, 'Record it as late'),
+    (OUT_OF_WINDOW_UPSENT, 'Record it as upsent'),
 ]
-
-
-# helper functions
-def normalize_email(value):
-    """Return a trimmed, lowercase email address."""
-    return str(value or '').strip().lower()
-
-
-def default_working_days():
-    """Return a fresh copy of the default working-day list (migration-safe)."""
-    return list(DEFAULT_WORKING_DAYS)
-
-
-def parse_time(value):
-    """Parse ``HH:MM`` (or ``HH:MM:SS``) into a ``datetime.time``, else ``None``."""
-
-    if isinstance(value, time):
-        return value
-
-    parts = str(value or '').strip().split(':')
-
-    if len(parts) not in (2, 3):
-        return None
-
-    try:
-        hour, minute = int(parts[0]), int(parts[1])
-        second = int(parts[2]) if len(parts) == 3 else 0
-    except ValueError:
-        return None
-
-    if not (0 <= hour <= 23 and 0 <= minute <= 59 and 0 <= second <= 59):
-        return None
-
-    return time(hour, minute, second)
-
-
-def parse_datetime_local(value):
-    """Parse ``YYYY-MM-DDTHH:MM`` from an ``<input type="datetime-local">``.
-
-    Naive values are returned as-is; callers pair them with the configured
-    attendance timezone before comparing.
-    """
-
-    if not isinstance(value, str) or len(value) < 16:
-        return None
-
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        return None
-
 
 
 class UserManager(models.Manager):
@@ -229,11 +180,6 @@ class PasswordResetToken(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     used = models.BooleanField(default=False)
 
-    def __str__(self):
-        """Return a readable token label."""
-
-        return f"{self.user.email} - {self.code}"
-
 
 class Passkey(models.Model):
     """WebAuthn credential metadata; biometric data never leaves the device."""
@@ -246,11 +192,6 @@ class Passkey(models.Model):
     transports = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_used_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        """Newest passkeys first."""
-
-        ordering = ['-created_at']
 
 
 class AttendanceManager(models.Manager):
@@ -318,9 +259,8 @@ class Attendance(models.Model):
     objects = AttendanceManager()
 
     class Meta:
-        """Newest attendance first, with one row per user per workday."""
+        """One attendance row per user per workday."""
 
-        ordering = ['-work_date', '-check_in']
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'work_date'],
@@ -333,34 +273,6 @@ class Attendance(models.Model):
             models.Index(fields=['user', 'work_date'], name='attendance_user_date_idx'),
         ]
 
-    def __str__(self):
-        """Return a readable attendance label."""
-
-        return f"{self.user.email} - {self.work_date}"
-
-    @property
-    def duration_display(self):
-        """Format the worked duration, or ``In progress`` while open."""
-
-        if self.check_out is None:
-            # The day closed without a clock-out: it was marked absent.
-            if self.status == self.STATUS_ABSENT:
-                return "No check-out"
-
-            return "In progress"
-
-        seconds = int((self.check_out - self.check_in).total_seconds())
-
-        if seconds < 60:
-            return "<1m"
-
-        hours, minutes = divmod(seconds // 60, 60)
-
-        if hours:
-            return f"{hours}h {minutes}m"
-
-        return f"{minutes}m"
-
 
 class AttendanceSettingsManager(models.Manager):
     """Manager for the singleton attendance rules row and its validator."""
@@ -371,89 +283,71 @@ class AttendanceSettingsManager(models.Manager):
         row, _created = self.get_or_create(pk=1)
         return row
 
-    @staticmethod
-    def working_days_value(postData):
-        """Read the ``working_days`` field from a QueryDict or a plain dict.
+    def settings_validator(self, postData, section=None):
+        """Validate the attendance rules form and return field-keyed errors.
 
-        Values come back as integers so templates can compare them with the
-        checkbox values directly; unparseable input is kept for the validator
-        to reject.
+        ``section`` limits the check to one card of the settings page:
+        ``'schedule'`` (days, times, zone) or ``'window'`` (the late-scan
+        policy); ``None`` validates everything, as a full-form post does.
         """
-
-        if hasattr(postData, 'getlist'):
-            raw = postData.getlist('working_days')
-        else:
-            value = postData.get('working_days') or []
-            raw = value if isinstance(value, list) else [value]
-
-        days = []
-
-        for day in raw:
-            try:
-                days.append(int(day))
-            except (TypeError, ValueError):
-                days.append(day)
-
-        return days
-
-    def settings_validator(self, postData):
-        """Validate the attendance rules form and return field-keyed errors."""
 
         errors = {}
 
-        days = self.working_days_value(postData)
+        if section in (None, 'schedule'):
+            days = working_days_value(postData)
 
-        try:
-            days = sorted({int(day) for day in days})
-        except (TypeError, ValueError):
-            days = []
+            try:
+                days = sorted({int(day) for day in days})
+            except (TypeError, ValueError):
+                days = []
 
-        if not days:
-            errors['working_days.required'] = "Pick at least one working day!"
-        elif any(day < 0 or day > 6 for day in days):
-            errors['working_days.invalid'] = "Working days must be numbers from 0 to 6!"
+            if not days:
+                errors['working_days.required'] = "Pick at least one working day!"
+            elif any(day < 0 or day > 6 for day in days):
+                errors['working_days.invalid'] = "Working days must be numbers from 0 to 6!"
 
-        start = parse_time(postData.get('start_time'))
-        end = parse_time(postData.get('end_time'))
-        earliest = parse_time(postData.get('earliest_check_in'))
-        latest = parse_time(postData.get('latest_check_in'))
+            start = parse_time(postData.get('start_time'))
+            end = parse_time(postData.get('end_time'))
+            earliest = parse_time(postData.get('earliest_check_in'))
+            latest = parse_time(postData.get('latest_check_in'))
 
-        for field, label, value in (
-            ('start_time', 'Scheduled start', start),
-            ('end_time', 'Scheduled end', end),
-            ('earliest_check_in', 'Earliest check-in', earliest),
-            ('latest_check_in', 'Latest check-in', latest),
-        ):
-            raw = (postData.get(field) or '').strip()
+            for field, label, value in (
+                ('start_time', 'Scheduled start', start),
+                ('end_time', 'Scheduled end', end),
+                ('earliest_check_in', 'Earliest check-in', earliest),
+                ('latest_check_in', 'Latest check-in', latest),
+            ):
+                raw = (postData.get(field) or '').strip()
 
-            if raw == '':
-                errors[f'{field}.required'] = f"{label} time is required!"
-            elif value is None:
-                errors[f'{field}.invalid'] = f"{label} must be a valid time (HH:MM)!"
+                if raw == '':
+                    errors[f'{field}.required'] = f"{label} time is required!"
+                elif value is None:
+                    errors[f'{field}.invalid'] = f"{label} must be a valid time (HH:MM)!"
 
-        if start and end and start >= end:
-            errors['end_time.order'] = "Scheduled end must be after the scheduled start!"
+            if start and end and start >= end:
+                errors['end_time.order'] = "Scheduled end must be after the scheduled start!"
 
-        if earliest and latest and earliest > latest:
-            errors['latest_check_in.order'] = "Latest check-in cannot be before the earliest check-in!"
+            if earliest and latest and earliest > latest:
+                errors['latest_check_in.order'] = "Latest check-in cannot be before the earliest check-in!"
 
-        if earliest and start and earliest > start:
-            errors['start_time.window'] = "Scheduled start must fall inside the check-in window!"
+            if earliest and start and earliest > start:
+                errors['start_time.window'] = "Scheduled start must fall inside the check-in window!"
 
-        if latest and start and latest < start:
-            errors['start_time.window'] = "Scheduled start must fall inside the check-in window!"
+            if latest and start and latest < start:
+                errors['start_time.window'] = "Scheduled start must fall inside the check-in window!"
 
-        timezone_name = (postData.get('timezone_name') or '').strip()
+            timezone_name = (postData.get('timezone_name') or '').strip()
 
-        if timezone_name == '':
-            errors['timezone_name.required'] = "A time zone is required!"
-        elif timezone_name not in zoneinfo.available_timezones():
-            errors['timezone_name.invalid'] = "Unknown time zone!"
+            if timezone_name == '':
+                errors['timezone_name.required'] = "A time zone is required!"
+            elif timezone_name not in zoneinfo.available_timezones():
+                errors['timezone_name.invalid'] = "Unknown time zone!"
 
-        policy = (postData.get('out_of_window') or '').strip()
+        if section in (None, 'window'):
+            policy = (postData.get('out_of_window') or '').strip()
 
-        if policy not in dict(OUT_OF_WINDOW_CHOICES):
-            errors['out_of_window.invalid'] = "Choose what happens after the check-in window!"
+            if policy not in dict(OUT_OF_WINDOW_CHOICES):
+                errors['out_of_window.invalid'] = "Choose what happens after the check-in window!"
 
         return errors
 
@@ -475,20 +369,6 @@ class AttendanceSettings(models.Model):
     allow_non_working = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
     objects = AttendanceSettingsManager()
-
-    def __str__(self):
-        """Return a readable settings label."""
-
-        return "Attendance settings"
-
-    @property
-    def working_days_label(self):
-        """Return the configured weekday numbers as a compact string."""
-
-        names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        days = sorted(int(day) for day in (self.working_days or []) if 0 <= int(day) <= 6)
-
-        return ", ".join(names[day] for day in days) or "None"
 
 
 class HolidayManager(models.Manager):
@@ -533,13 +413,3 @@ class Holiday(models.Model):
     date = models.DateField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     objects = HolidayManager()
-
-    class Meta:
-        """Calendar order."""
-
-        ordering = ['date']
-
-    def __str__(self):
-        """Return a readable holiday label."""
-
-        return f"{self.name} ({self.date})"

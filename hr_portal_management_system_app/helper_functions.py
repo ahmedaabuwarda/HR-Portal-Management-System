@@ -2,6 +2,7 @@
 # takes about the same time whether the account exists or not.
 import ast
 import base64
+from datetime import datetime
 import json
 
 from django.contrib import messages
@@ -16,7 +17,7 @@ from webauthn.helpers.structs import (
     UserVerificationRequirement,
 )
 
-from .attendance_rules import evaluate_check_in, settings_timezone
+from .attendance_rules import evaluate_check_in, is_working_day, settings_timezone
 
 from .models import Attendance, AttendanceSettings, Holiday, User
 
@@ -31,6 +32,8 @@ def begin_session(request, user):
     request.session.cycle_key()
     request.session['user_id'] = user.id
     request.session['user_first_name'] = user.first_name
+    # Kept in the session so the navbar can show the Admin link without a query.
+    request.session['user_is_admin'] = user.is_admin
 
 
 # Return the signed-in user for this request, or None when nobody is logged in.
@@ -41,6 +44,16 @@ def current_user(request):
         return None
 
     return User.objects.filter(id=user_id).first()
+
+
+# Return the signed-in user only when they are an admin, else None.
+def current_admin(request):
+    user = current_user(request)
+
+    if user is None or not user.is_admin:
+        return None
+
+    return user
 
 
 # Revoke all other sessions for this user, except the current one.
@@ -194,6 +207,46 @@ def close_stale_attendance(today):
     ).update(status=Attendance.STATUS_ABSENT)
 
 
+def record_rejected_scan_as_absent(user, rules, local, passkey, holidays):
+    """Persist a rejected scan as an absent day once the window has closed.
+
+    A scan before the window opens can still be counted later the same day,
+    and non-working days and holidays are not absences — so only a scan
+    after ``latest_check_in`` finalises the day. Returns ``True`` when a
+    row was written.
+    """
+
+    work_date = local.date()
+
+    if local.timetz().replace(tzinfo=None) <= rules.latest_check_in:
+        return False
+
+    if not is_working_day(rules, work_date) or work_date in holidays:
+        return False
+
+    try:
+        # The savepoint keeps a concurrent first scan from aborting the request.
+        with transaction.atomic():
+            # ``check_in`` is NOT NULL: an absent day carries the window
+            # close as its stamp — nobody was ever clocked in.
+            Attendance.objects.create(
+                user=user,
+                work_date=work_date,
+                check_in=datetime.combine(
+                    work_date,
+                    rules.latest_check_in,
+                    tzinfo=settings_timezone(rules),
+                ),
+                status=Attendance.STATUS_ABSENT,
+                method=Attendance.METHOD_PASSKEY,
+                passkey=passkey,
+            )
+    except IntegrityError:
+        return False
+
+    return True
+
+
 def flash_attendance_result(request, status, user=None, reason=None):
     """Flash a message describing the recorded attendance result."""
 
@@ -240,6 +293,15 @@ def record_attendance(user, passkey):
             counted, outcome = evaluate_check_in(rules, local, holidays)
 
             if not counted:
+                # A scan that can never count again today leaves an absent
+                # record behind instead of no row at all.
+                if record_rejected_scan_as_absent(user, rules, local, passkey, holidays):
+                    closes = rules.latest_check_in.strftime('%H:%M')
+                    outcome = (
+                        f"The check-in window closed at {closes}. "
+                        "Today is recorded as absent."
+                    )
+
                 return 'rejected', outcome
 
             # The savepoint lets the unique constraint resolve a concurrent first scan.
@@ -262,6 +324,11 @@ def record_attendance(user, passkey):
                 )
 
         if attendance is not None and attendance.check_out is None:
+            # A rejected scan may have finalised today as absent: such a day
+            # was never clocked in, so it can never be clocked out.
+            if attendance.status == Attendance.STATUS_ABSENT:
+                return 'rejected', "Today is recorded as absent. This scan is not counted."
+
             # Check-out has no window: only check-ins are governed by the rules.
             attendance.check_out = now
             attendance.passkey = passkey

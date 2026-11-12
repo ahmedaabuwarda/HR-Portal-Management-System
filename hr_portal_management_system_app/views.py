@@ -1,9 +1,10 @@
 import bcrypt
 
-from . import auth, passkey, attendance
+from . import admin_panel, auth, attendance, passkey
 from .helper_functions import close_stale_attendance, current_user, revoke_other_sessions
 from .attendance_rules import local_now
-from .models import Attendance, Passkey, User, normalize_email
+from .models import Attendance, Passkey, User
+from .utils import normalize_email
 
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -80,22 +81,31 @@ def dashboard(request):
     # Any past day still open (no clock-out) counts as absent.
     close_stale_attendance(today)
 
-    history = Attendance.objects.filter(
+    history = (
+        Attendance.objects.filter(user_id=user_id)
+        .select_related('passkey')
+        .order_by('-work_date', '-check_in')
+    )
+
+    today_record = Attendance.objects.filter(
         user_id=user_id,
-    ).select_related('passkey')
+        work_date=today,
+    ).first()
 
     context = {
         'passkey_count': Passkey.objects.filter(user_id=user_id).count(),
         'page_obj': Paginator(history, 20).get_page(request.GET.get('page')),
+        # An absent day is final: it is not an open clock-in.
         'open_attendance': Attendance.objects.filter(
             user_id=user_id,
             work_date=today,
             check_out__isnull=True,
-        ).count(),
-        'today_attendance': Attendance.objects.filter(
-            user_id=user_id,
-            work_date=today,
-        ).first(),
+        ).exclude(status=Attendance.STATUS_ABSENT).count(),
+        'today_attendance': today_record,
+        'today_absent': (
+            today_record is not None
+            and today_record.status == Attendance.STATUS_ABSENT
+        ),
     }
 
     return render(request, 'user/dashboard.html', context)
@@ -167,6 +177,17 @@ def settings(request):
         'passkeys': user.passkeys.all(),
     }
     return render(request, 'user/settings.html', context)
+
+
+# ---------- Admin section ----------
+
+
+def admin_users(request):
+    return admin_panel.admin_users(request)
+
+
+def admin_attendance_hours(request):
+    return admin_panel.admin_attendance_hours(request)
 
 
 # ---------- Fingerprint enrollment ----------

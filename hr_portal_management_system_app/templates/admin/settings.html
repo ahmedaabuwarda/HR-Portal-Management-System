@@ -1,3 +1,113 @@
-{% extends 'layout.html' %} {% block content %}
-<div class="container">Settings</div>
+{% extends 'layout.html' %} {% block title %}Attending hours{% endblock %} {% block content %}
+<div class="container py-4 mt-7">
+  <header class="d-flex flex-wrap align-items-center justify-content-between gap-4 mb-7">
+    <div class="d-flex align-items-center gap-3">
+      <span class="avatar avatar-subtle theme-primary fw-semibold" aria-hidden="true">{% include "icons/clock.html" with px=20 %}</span>
+      <div>
+        <h1 class="h3 mb-0">Attending hours</h1>
+        <p class="fg-2 small mb-0">The rules every fingerprint check-in is judged against.</p>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <span class="small fg-2 mb-0">Last updated {{ rules.updated_at|date:"M j, Y g:i A" }}</span>
+      <a class="btn btn-outline theme-primary d-inline-flex align-items-center gap-2" href="{% url 'admin_users' %}"> {% include "icons/users.html" with px=16 %} All users </a>
+    </div>
+  </header>
+
+  <form method="post" action="{% url 'admin_attendance_hours' %}" novalidate>
+    {% csrf_token %}
+    <div class="row gx-4 gy-4">
+      <div class="col-12 md:col-7">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex flex-column">
+            <h2 class="h5 mb-1 d-flex align-items-center gap-2">
+              <span class="fg-primary d-inline-flex">{% include "icons/calendar-check.html" with px=18 %}</span>
+              Schedule
+            </h2>
+            <p class="small fg-2 mb-4">Which days people work, and the hours expected of them.</p>
+
+            <div class="mb-4">
+              <span class="form-label d-block">Working days</span>
+              <div class="row row-cols-1 sm:row-cols-2 md:row-cols-3 gx-3 gy-2">
+                {% for day in working_days %}
+                <div class="col form-field">
+                  <input class="check theme-primary" type="checkbox" name="working_days" value="{{ day.0 }}" id="id_day_{{ day.0 }}" {% if day.0 in rules.working_days %}checked{% endif %} />
+                  <label for="id_day_{{ day.0 }}">{{ day.1 }}</label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="row gx-3 gy-3">
+              <div class="col-12 sm:col-6">
+                <label for="id_start_time" class="form-label">Scheduled start</label>
+                <input type="time" class="form-control" id="id_start_time" name="start_time" value="{{ rules.start_time|time:'H:i' }}" required />
+              </div>
+              <div class="col-12 sm:col-6">
+                <label for="id_end_time" class="form-label">Scheduled end</label>
+                <input type="time" class="form-control" id="id_end_time" name="end_time" value="{{ rules.end_time|time:'H:i' }}" required />
+              </div>
+              <div class="col-12 sm:col-6">
+                <label for="id_earliest_check_in" class="form-label">Earliest check-in</label>
+                <input type="time" class="form-control" id="id_earliest_check_in" name="earliest_check_in" value="{{ rules.earliest_check_in|time:'H:i' }}" required />
+                <p class="small fg-2 mb-0 mt-1">Scans before this time are never counted.</p>
+              </div>
+              <div class="col-12 sm:col-6">
+                <label for="id_latest_check_in" class="form-label">Latest check-in</label>
+                <input type="time" class="form-control" id="id_latest_check_in" name="latest_check_in" value="{{ rules.latest_check_in|time:'H:i' }}" required />
+                <p class="small fg-2 mb-0 mt-1">Scans after this time follow the window rule.</p>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <label for="id_timezone_name" class="form-label">Time zone</label>
+              <select class="form-control" id="id_timezone_name" name="timezone_name" required>
+                {% for zone in timezones %}
+                <option value="{{ zone }}" {% if zone == rules.timezone_name %}selected{% endif %}>{{ zone }}</option>
+                {% endfor %}
+              </select>
+              <p class="small fg-2 mb-0 mt-1">The server clock is converted to this zone before the rules run.</p>
+            </div>
+
+            <div class="mt-auto pt-4">
+              <button type="submit" name="section" value="schedule" class="btn btn-solid theme-primary d-inline-flex align-items-center gap-2">{% include "icons/check.html" with px=16 %} Save schedule</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 md:col-5">
+        <div class="card shadow-sm h-auto">
+          <div class="card-body d-flex flex-column">
+            <h2 class="h5 mb-1 d-flex align-items-center gap-2">
+              <span class="fg-primary d-inline-flex">{% include "icons/clock.html" with px=18 %}</span>
+              After the window
+            </h2>
+            <p class="small fg-2 mb-4">What happens to scans outside the allowed check-in window.</p>
+
+            <div class="mb-4">
+              <span class="form-label d-block">Late scans</span>
+              <div class="form-field">
+                {% for choice in out_of_window_choices %}
+                <input class="radio theme-primary" type="radio" name="out_of_window" value="{{ choice.0 }}" id="id_{{ choice.0 }}" {% if choice.0 == rules.out_of_window %}checked{% endif %} required />
+                <label for="id_{{ choice.0 }}">{{ choice.1 }}</label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="form-field mb-4">
+              <input class="check theme-primary" type="checkbox" name="allow_non_working" id="id_allow_non_working" {% if rules.allow_non_working %}checked{% endif %} />
+              <label for="id_allow_non_working">Allow check-ins on non-working days and holidays</label>
+            </div>
+
+            <div class="mt-auto pt-4">
+              <button type="submit" name="section" value="window" class="btn btn-solid theme-primary d-inline-flex align-items-center gap-2">{% include "icons/check.html" with px=16 %} Save window rules</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
 {% endblock %}
