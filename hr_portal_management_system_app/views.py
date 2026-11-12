@@ -190,6 +190,10 @@ def admin_attendance_hours(request):
     return admin_panel.admin_attendance_hours(request)
 
 
+def admin_ai_analysis(request):
+    return admin_panel.admin_ai_analysis(request)
+
+
 # ---------- Fingerprint enrollment ----------
 
 
