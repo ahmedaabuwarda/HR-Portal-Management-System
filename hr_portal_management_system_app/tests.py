@@ -737,3 +737,98 @@ class AdminSectionTests(TestCase):
         self.assertContains(response, 'name="section" value="window"')
         self.assertContains(response, 'Save schedule')
         self.assertContains(response, 'Save window rules')
+
+
+class AdminAiAnalysisTests(TestCase):
+    """The AI analysis page summarizes one employee with Gemini."""
+
+    def sign_in(self, is_admin=False, email='sara@example.com'):
+        user = make_user(email)
+
+        if is_admin:
+            User.objects.filter(pk=user.pk).update(is_admin=True)
+
+        self.client.post(
+            reverse('login'),
+            {'email': email, 'password': 'Password123'},
+        )
+        return user
+
+    def seed_attendance(self, user):
+        """Two present days, one late, one absent."""
+        for index, status in enumerate(
+            ['present', 'present', 'late', 'absent'], start=1
+        ):
+            Attendance.objects.create(
+                user=user,
+                work_date=date(2026, 1, index),
+                check_in=timezone.make_aware(datetime(2026, 1, index, 8, 0)),
+                check_out=timezone.make_aware(datetime(2026, 1, index, 16, 0)),
+                status=status,
+            )
+
+    def test_visitor_is_sent_to_login(self):
+        response = self.client.get(reverse('admin_ai_analysis'), {'user': 1})
+
+        self.assertRedirects(response, reverse('login'))
+
+    def test_member_is_sent_to_dashboard(self):
+        self.sign_in()
+
+        response = self.client.get(reverse('admin_ai_analysis'), {'user': 1})
+
+        self.assertRedirects(response, reverse('dashboard'))
+
+    def test_unknown_user_is_sent_back_to_the_list(self):
+        self.sign_in(is_admin=True)
+
+        response = self.client.get(reverse('admin_ai_analysis'), {'user': 999})
+
+        self.assertRedirects(response, reverse('admin_users'))
+
+    def test_get_shows_the_attendance_counts(self):
+        self.sign_in(is_admin=True)
+        target = make_user('mona@example.com')
+        self.seed_attendance(target)
+
+        response = self.client.get(
+            reverse('admin_ai_analysis'), {'user': target.id}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'mona@example.com')
+        self.assertEqual(response.context['stats']['total'], 4)
+        self.assertEqual(response.context['stats']['present'], 2)
+        self.assertEqual(response.context['stats']['late'], 1)
+        self.assertEqual(response.context['stats']['absent'], 1)
+
+    @patch('hr_portal_management_system_app.admin_panel._ask_gemini')
+    def test_post_renders_the_ai_write_up(self, ask_gemini):
+        ask_gemini.return_value = "Mona is reliable and rarely late."
+        self.sign_in(is_admin=True)
+        target = make_user('mona@example.com')
+        self.seed_attendance(target)
+
+        response = self.client.post(
+            f"{reverse('admin_ai_analysis')}?user={target.id}"
+        )
+
+        self.assertContains(response, 'Mona is reliable and rarely late.')
+        prompt = ask_gemini.call_args[0][0]
+        self.assertIn('4 recorded days', prompt)
+        self.assertIn('2 present', prompt)
+
+    @override_settings(GEMINI_API_KEY='')
+    def test_missing_key_shows_a_friendly_error(self):
+        self.sign_in(is_admin=True)
+        target = make_user('mona@example.com')
+        self.seed_attendance(target)
+
+        response = self.client.post(
+            f"{reverse('admin_ai_analysis')}?user={target.id}"
+        )
+
+        # The stats stay on the page; only the AI part fails.
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'mona@example.com')
+        self.assertContains(response, 'AI analysis failed')

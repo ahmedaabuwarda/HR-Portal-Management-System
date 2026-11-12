@@ -31,6 +31,7 @@ urlpatterns = [
     # (Django's own admin site still owns /admin/)
     path('admin-panel/users', views.admin_users, name='admin_users'),
     path('admin-panel/attendance-hours', views.admin_attendance_hours, name='admin_attendance_hours'),
+    path('admin-panel/ai-analysis', views.admin_ai_analysis, name='admin_ai_analysis'),
     # 404 page for the wrong endpoints  
     path('<path:unmatched>', views.not_found, name='not_found'),
 ]
