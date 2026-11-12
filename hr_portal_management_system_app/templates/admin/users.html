@@ -9,9 +9,7 @@
       </div>
     </div>
 
-    <a class="btn btn-outline theme-primary d-inline-flex align-items-center gap-2" href="{% url 'admin_attendance_hours' %}">
-      {% include "icons/clock.html" with px=16 %} Attending hours
-    </a>
+    <a class="btn btn-outline theme-primary d-inline-flex align-items-center gap-2" href="{% url 'admin_attendance_hours' %}"> {% include "icons/clock.html" with px=16 %} Attending hours </a>
   </header>
 
   <div class="row row-cols-1 md:row-cols-3 gx-3 gy-3 mb-4">
@@ -43,7 +41,9 @@
       <div class="card shadow-sm h-100">
         <div class="card-body">
           <div class="d-flex align-items-center gap-2 mb-2">
-            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true"> {% include "icons/calendar-check.html" with px=16 %} </span>
+            <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 flex-shrink-0" aria-hidden="true">
+              {% include "icons/calendar-check.html" with px=16 %}
+            </span>
             <p class="small fg-2 mb-0">Attendance records</p>
           </div>
           <p class="h3 mb-1">{{ record_count }}</p>
@@ -76,6 +76,7 @@
               <th scope="col">Registered</th>
               <th scope="col">Attendance records</th>
               <th scope="col">Role</th>
+              <th scope="col">AI</th>
             </tr>
           </thead>
           <tbody>
@@ -90,13 +91,16 @@
                 {% if account.is_admin %}
                 <span class="badge badge-subtle rounded-pill theme-primary">Admin</span>
                 {% else %}
-                <span class="badge badge-subtle rounded-pill theme-secondary">Member</span>
+                <span class="badge badge-subtle rounded-pill theme-secondary">Employee</span>
                 {% endif %}
+              </td>
+              <td class="text-nowrap">
+                <a class="btn btn-outline theme-primary btn-sm d-inline-flex align-items-center gap-1" href="{% url 'admin_ai_analysis' %}?user={{ account.id }}">{% include "icons/info.html" with px=14 %} Analyze</a>
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" class="text-center py-5">
+              <td colspan="7" class="text-center py-5">
                 <span class="d-inline-flex align-items-center justify-content-center bg-subtle-primary fg-primary rounded-circle p-2 mb-2" aria-hidden="true"> {% include "icons/users.html" with px=20 %} </span>
                 <p class="mb-1 fw-medium">No users yet</p>
                 <p class="small fg-2 mb-0">Accounts appear here as people register.</p>
