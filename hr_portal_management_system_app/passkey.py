@@ -1,7 +1,8 @@
 import json
 
 from django.urls import reverse
-from .models import Passkey, User, normalize_email
+from .models import Passkey, User
+from .utils import normalize_email
 
 from MySQLdb import IntegrityError
 from django.shortcuts import redirect
@@ -195,7 +196,7 @@ def passkey_login_complete(request):
     if not challenge:
         return JsonResponse({'error': 'Login session expired. Try again.'}, status=400)
 
-    passkeys = Passkey.objects.select_related('user')
+    passkeys = Passkey.objects.select_related('user').order_by('-created_at')
 
     if user_id:
         passkeys = passkeys.filter(user_id=user_id)

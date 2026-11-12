@@ -27,6 +27,10 @@ urlpatterns = [
     # attendence check in/out using fingerprint
     path("attendance/begin", views.attendance_begin, name="attendance_begin"),
     path("attendance/complete", views.attendance_complete, name="attendance_complete"),
+    # admin section: users list + attending hours
+    # (Django's own admin site still owns /admin/)
+    path('admin-panel/users', views.admin_users, name='admin_users'),
+    path('admin-panel/attendance-hours', views.admin_attendance_hours, name='admin_attendance_hours'),
     # 404 page for the wrong endpoints  
     path('<path:unmatched>', views.not_found, name='not_found'),
 ]
