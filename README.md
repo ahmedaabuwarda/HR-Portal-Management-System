@@ -9,6 +9,7 @@ managing attendance rules and reviewing attendance records.
 ## Table of Contents
 
 -   [Overview](#overview)
+-   [Live Application](#live-application)
 -   [Features](#features)
 -   [Technology Stack](#technology-stack)
 -   [Application Architecture](#application-architecture)
@@ -37,6 +38,10 @@ administrator-configured working days, scheduled hours, check-in
 windows, time zones, and holiday rules. Administrators can view
 registered users, configure attendance policies, and request an
 AI-generated summary of an employee's attendance statistics.
+
+## Live Application
+
+The application is available at [hrportal.flashhub.net](https://hrportal.flashhub.net/).
 
 ## Features
 
@@ -309,25 +314,23 @@ support is also required.
 
 ### Important deployment security note
 
-**Do not deploy or publish the supplied source snapshot as-is.** The
-reviewed `settings.py` contains hard-coded secret/configuration values,
-including sensitive credentials. Those values are intentionally not
-reproduced in this README. Before sharing or deploying the repository:
+**Do not use the checked-in settings as production settings.** The
+current `settings.py` contains a hard-coded development `SECRET_KEY`,
+sets `DEBUG = True`, and leaves `ALLOWED_HOSTS` empty. Before deploying
+your own copy:
 
 1.  Revoke and rotate any credentials that have been committed or
     included in the archive, including API and email credentials.
-2.  Move secrets and the Django `SECRET_KEY` into environment-based
-    configuration; remove hard-coded fallback secrets from the source.
+2.  Remove the hard-coded key and update `settings.py` to read a unique
+    production `SECRET_KEY` from a secure environment variable.
 3.  Set `DEBUG = False` and configure `ALLOWED_HOSTS` for the deployment
-    environment.
+    environment in `settings.py`.
 4.  Use a dedicated, least-privilege MySQL account instead of a database
     root account.
 5.  Configure HTTPS and review Django's production security settings.
 
-The `.gitignore` excludes `.env`, but the current settings file does not
-load `.env` automatically. Set environment variables through your
-operating system, shell, IDE, or deployment platform unless you add a
-dotenv loader.
+The live site is linked above, but its existence does not mean the
+checked-in development settings are suitable for production.
 
 ## Requirements
 
@@ -390,78 +393,39 @@ its connection details using the environment variables described below.
 
 ## Configuration
 
-The project reads the following environment variables in `settings.py`:
+`settings.py` loads a `.env` file from the repository root using
+`python-dotenv`. The `.env` file is ignored by Git. Copy
+`.env.example` to `.env` and set the values required for your local
+database and email account:
 
-  -------------------------------------------------------------------------------
-  Variable                Purpose                 Default in source
-  ----------------------- ----------------------- -------------------------------
-  `DB_NAME`               MySQL database name     `hr_portal_management_system`
+``` dotenv
+DB_NAME=hr_portal_management_system
+DB_USER=your_mysql_user
+DB_PASSWORD=your_mysql_password
+DB_HOST=127.0.0.1
+DB_PORT=3306
 
-  `DB_USER`               MySQL username          `root`
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your_sender_email
+EMAIL_HOST_PASSWORD=your_email_app_password
 
-  `DB_PASSWORD`           MySQL password          A development fallback is
-                                                  present; replace it
-
-  `DB_HOST`               MySQL host              `127.0.0.1`
-
-  `DB_PORT`               MySQL port              `3306`
-
-  `EMAIL_BACKEND`         Django email backend    SMTP backend
-
-  `EMAIL_HOST`            SMTP server             `smtp.gmail.com`
-
-  `EMAIL_PORT`            SMTP port               `587`
-
-  `EMAIL_HOST_USER`       Sender email account    A project default is present;
-                                                  configure your own
-
-  `EMAIL_HOST_PASSWORD`   SMTP/app password       A development fallback is
-                                                  present; replace it
-
-  `GEMINI_API_KEY`        Key used for Gemini     Must be configured for AI
-                          attendance analysis     analysis
-  -------------------------------------------------------------------------------
-
-`EMAIL_USE_TLS` is enabled in the current settings. For Gmail SMTP, use
-an appropriate Google App Password rather than an account's normal
-password.
-
-Example environment setup:
-
-**Windows PowerShell**
-
-``` powershell
-$env:DB_NAME = "hr_portal_management_system"
-$env:DB_USER = "your_mysql_user"
-$env:DB_PASSWORD = "your_mysql_password"
-$env:DB_HOST = "127.0.0.1"
-$env:DB_PORT = "3306"
-
-$env:EMAIL_HOST_USER = "your_sender_email"
-$env:EMAIL_HOST_PASSWORD = "your_email_app_password"
-$env:GEMINI_API_KEY = "your_gemini_api_key"
+# Optional: required only for Gemini attendance summaries.
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-**macOS / Linux**
+For Gmail SMTP, use a Google App Password rather than your account's
+normal password. The current settings always enable `EMAIL_USE_TLS` and
+derive `DEFAULT_FROM_EMAIL` from `EMAIL_HOST_USER`; neither setting is
+read from `.env`. Database and email values are empty if omitted, and
+Gemini summaries require `GEMINI_API_KEY`.
 
-``` bash
-export DB_NAME="hr_portal_management_system"
-export DB_USER="your_mysql_user"
-export DB_PASSWORD="your_mysql_password"
-export DB_HOST="127.0.0.1"
-export DB_PORT="3306"
-
-export EMAIL_HOST_USER="your_sender_email"
-export EMAIL_HOST_PASSWORD="your_email_app_password"
-export GEMINI_API_KEY="your_gemini_api_key"
-```
-
-These are shell environment variables; creating a `.env` file alone will
-not make Django read them in the current project configuration.
-
-> **Note:** The current `settings.py` does not read `SECRET_KEY` from an
-> environment variable. Update the settings implementation as part of
-> the security work described above before deploying the application.
+The current settings do **not** read `SECRET_KEY`, `DEBUG`,
+`ALLOWED_HOSTS`, `EMAIL_USE_TLS`, or `DEFAULT_FROM_EMAIL` from `.env`.
+Adding those variables to `.env` will not configure them without first
+updating `settings.py`; in particular, the production security settings
+described above must be implemented before deploying a copy.
 
 ## Database Setup
 
@@ -547,20 +511,20 @@ configuring the database and dependencies.
 ## Screenshots
 
 -   Public home page
-![Home Page](screenshots/home.png)
+![Home Page](screenshots/Home.PNG)
 -   Registration and login pages
-![Registration Page](screenshots/Register_Page.png)
-![Login Page](screenshots/Login_Page.png)
+![Registration Page](screenshots/Register_Page.PNG)
+![Login Page](screenshots/Login_Page.PNG)
 -   Employee dashboard and attendance history
-![Employee Dashborad](screenshots/Employee_dashboard.png)
+![Employee Dashboard](screenshots/Employee_dashboard.PNG)
 -   Passkey enrollment in account settings
-![Employee settings page](screenshots/Employee_settings_page.png)
+![Employee settings page](screenshots/Employee_settings_page.PNG)
 -   Administrator user list
-![Admin Users list](screenshots/Admin_users_list.png)
+![Admin Users list](screenshots/Admin_users_list.PNG)
 -   Attendance schedule settings
-![Attendance schedule settings](screenshots/Attendance_settings.png)
+![Attendance schedule settings](screenshots/Attendance_settings.PNG)
 -   AI attendance summary
-![AI Attendance Analysis](Attendance_analysis.png)
+![AI Attendance Analysis](screenshots/Attendance_analysis.PNG)
 
 
 
@@ -572,5 +536,3 @@ The project's About page identifies the following contributors:
     passkeys, and attendance flows.
 -   **Doaa Abushar** --- Co-developer; interface design, page templates,aws deployment 
     and user experience.
-
-
